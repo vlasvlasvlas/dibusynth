@@ -47,6 +47,7 @@ const Canvas = (() => {
     el.height = Math.round(h * dpr);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(dpr, dpr);
+    buildGrid();
     redraw();
   }
 
@@ -287,30 +288,59 @@ const Canvas = (() => {
   // ── Lookup grid ──────────────────────────────────────────────────────────
 
   function buildGrid() {
-    // One entry per (color) per column/row — prevents same-color stacking
-    const hMap = new Map(); // cx → Map<color, y>
-    const vMap = new Map(); // cy → Map<color, x>
+    const hMap = new Map();
+    const vMap = new Map();
+    const { w, h } = getSize();
+
+    const cells = new Set();
+    function putH(x, y, color) {
+      if (x < 0 || x > w || y < 0 || y > h) return;
+      if (!hMap.has(x)) hMap.set(x, new Map());
+      hMap.get(x).set(`${color}:${y}`, { y, color });
+    }
+    function putV(y, x, color, pitchY = y) {
+      if (x < 0 || x > w || y < 0 || y > h) return;
+      if (!vMap.has(y)) vMap.set(y, new Map());
+      vMap.get(y).set(`${color}:${x}:${pitchY}`, { x, y: pitchY, color });
+    }
+    function add(p, color) {
+      const snapped = snapPos(p);
+      const x = Math.round(snapped.x), y = Math.round(snapped.y);
+      if (quantize && cellSize > 0) {
+        const key = `${color}:${x}:${y}`;
+        if (cells.has(key)) return;
+        cells.add(key);
+        // A snapped point occupies a cell, not one isolated pixel. Keep its
+        // pitch fixed throughout that cell, rather than adding in-between notes.
+        const half = cellSize / 2;
+        for (let cx = Math.max(0, Math.ceil(x - half)); cx < Math.min(w + 1, Math.ceil(x + half)); cx++) putH(cx, y, color);
+        for (let cy = Math.max(0, Math.ceil(y - half)); cy < Math.min(h + 1, Math.ceil(y + half)); cy++) putV(cy, x, color, y);
+      } else {
+        // Keep separate pitches of the same color (chords and circle branches).
+        putH(x, y, color);
+        putV(y, x, color);
+      }
+    }
 
     strokes.forEach(stroke => {
-      stroke.points.forEach(p => {
-        const cx = Math.round(p.x), cy = Math.round(p.y);
-
-        if (!hMap.has(cx)) hMap.set(cx, new Map());
-        if (!hMap.get(cx).has(stroke.color)) hMap.get(cx).set(stroke.color, p.y);
-
-        if (!vMap.has(cy)) vMap.set(cy, new Map());
-        if (!vMap.get(cy).has(stroke.color)) vMap.get(cy).set(stroke.color, p.x);
-      });
+      const pts = stroke.points;
+      if (!pts.length) return;
+      add(pts[0], stroke.color);
+      const count = pts.length + (stroke.type === 'circle' ? 1 : 0);
+      for (let i = 1; i < count; i++) {
+        const a = pts[i - 1], b = pts[i % pts.length];
+        // Interpolate the acoustic map, including the gaps between snapped cells.
+        // Never mutate rawPoints: disabling grid must restore the original notes.
+        const steps = Math.max(1, Math.ceil(Math.max(Math.abs(b.x - a.x), Math.abs(b.y - a.y))));
+        for (let j = 1; j <= steps; j++) {
+          const t = j / steps;
+          add({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }, stroke.color);
+        }
+      }
     });
 
-    hGrid = new Map();
-    hMap.forEach((colorMap, cx) => {
-      hGrid.set(cx, Array.from(colorMap, ([color, y]) => ({ y, color })));
-    });
-    vGrid = new Map();
-    vMap.forEach((colorMap, cy) => {
-      vGrid.set(cy, Array.from(colorMap, ([color, x]) => ({ x, color })));
-    });
+    hGrid = new Map(Array.from(hMap, ([x, hits]) => [x, Array.from(hits.values())]));
+    vGrid = new Map(Array.from(vMap, ([y, hits]) => [y, Array.from(hits.values())]));
   }
 
   // ── Quantize toggle (reversible) ─────────────────────────────────────────

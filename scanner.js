@@ -6,112 +6,92 @@ const Scanner = (() => {
     tb:'rgba(0,150,80,0.30)', bt:'rgba(180,60,60,0.30)'
   };
 
-  // Minimum pixels between note triggers per sweep
-  const MIN_TRIG_PX = 20;
-
-  const sweeps = {
-    lr: { active:false, pos:0, vol:0.6, lastTrig:-MIN_TRIG_PX },
-    rl: { active:false, pos:0, vol:0.6, lastTrig:99999 },
-    tb: { active:false, pos:0, vol:0.6, lastTrig:-MIN_TRIG_PX },
-    bt: { active:false, pos:0, vol:0.6, lastTrig:99999 }
-  };
-
-  let bpm = 90;
+  const sweeps = Object.fromEntries(SWEEP_IDS.map(id => [id, {
+    active: false, phase: 0, pos: 0, vol: 0.6, lastDot: -Infinity
+  }]));
   const BEATS_PER_SWEEP = 4;
-  let playing  = false;
-  let lastTime = null;
-  let rafId    = null;
+  const LOOKAHEAD = 0.050;
+  let bpm = 90;
+  let playing = false;
+  let scheduledTime = 0;
+  let timerId = null;
+  let rafId = null;
 
-  function pxPerMs(size) {
-    return size / (BEATS_PER_SWEEP * (60000 / bpm));
+  function period() { return BEATS_PER_SWEEP * 60 / bpm; }
+  function reverse(id) { return id === 'rl' || id === 'bt'; }
+  function horizontal(id) { return id === 'lr' || id === 'rl'; }
+  function wrap(phase) { return ((phase % 1) + 1) % 1; }
+
+  function sample(id, coordinate, time, grid, height, configs) {
+    const hits = grid.get(coordinate) || [];
+    const notes = hits.map(hit => ({
+      color: hit.color,
+      freq: Audio.noteForY(horizontal(id) ? hit.y : (hit.y ?? coordinate), height)
+    })).filter(note => note.freq);
+    Audio.syncSweep(id, notes, configs, sweeps[id].vol, time);
   }
 
-  function shouldTrig(sweep, pos) {
-    return Math.abs(pos - sweep.lastTrig) >= MIN_TRIG_PX;
-  }
-
-  function tick(now) {
-    rafId = requestAnimationFrame(tick);
-
-    const dt = lastTime !== null ? Math.min(now - lastTime, 100) : 0;
-    lastTime = now;
-
+  // Audio is scheduled independently of drawing frames. Visit EVERY crossed
+  // column/row, including loop boundaries, so sparse grid notes cannot be skipped.
+  function schedule() {
+    if (!playing) return;
+    const now = Audio.currentTime();
     const { w, h } = Canvas.getSize();
-    const hGrid    = Canvas.getHGrid();
-    const vGrid    = Canvas.getVGrid();
-    const colorCfg = Canvas.getColorConfig();
-    const ctx      = Canvas.getCtx();
+    if (w <= 0 || h <= 0) return;
+    const configs = Canvas.getColorConfig();
+    if (scheduledTime < now) {
+      // A background-tab stall must not replay a burst of overdue notes.
+      const missed = now + LOOKAHEAD - scheduledTime;
+      for (const s of Object.values(sweeps)) if (s.active) s.phase = wrap(s.phase + missed / period());
+      Audio.stopAll();
+      scheduledTime = now + LOOKAHEAD;
+    }
+    const end = now + LOOKAHEAD;
+    const elapsed = Math.max(0, end - scheduledTime);
+    for (const id of SWEEP_IDS) {
+      const s = sweeps[id];
+      if (!s.active) continue;
+      const size = Math.max(1, Math.round(horizontal(id) ? w : h));
+      const grid = horizontal(id) ? Canvas.getHGrid() : Canvas.getVGrid();
+      const start = s.phase * size;
+      const finish = start + elapsed * size / period();
+      const coord = travel => reverse(id) ? size - travel : travel;
+      sample(id, coord(Math.floor(start + 1e-7)), scheduledTime, grid, h, configs);
+      for (let boundary = Math.floor(start + 1e-7) + 1; boundary <= finish + 1e-7; boundary++) {
+        const time = scheduledTime + (boundary - start) * period() / size;
+        const cell = boundary % size;
+        if (cell === 0) sample(id, coord(size), time, grid, h, configs);
+        sample(id, coord(cell), time, grid, h, configs);
+      }
+      s.phase = wrap(finish / size);
+    }
+    scheduledTime = end;
+  }
 
+  function visiblePhase(s) {
+    return playing ? wrap(s.phase - Math.max(0, scheduledTime - Audio.currentTime()) / period()) : s.phase;
+  }
+
+  function tick() {
+    rafId = requestAnimationFrame(tick);
+    const { w, h } = Canvas.getSize();
+    const ctx = Canvas.getCtx();
     Canvas.redraw();
     if (!playing) return;
-
-    const hs = pxPerMs(w) * dt;
-    const vs = pxPerMs(h) * dt;
-
-    // Left → Right
-    if (sweeps.lr.active) {
-      sweeps.lr.pos += hs;
-      if (sweeps.lr.pos > w) { sweeps.lr.pos = 0; sweeps.lr.lastTrig = -MIN_TRIG_PX; }
-      if (shouldTrig(sweeps.lr, sweeps.lr.pos)) {
-        sweeps.lr.lastTrig = sweeps.lr.pos;
-        const col = Math.round(sweeps.lr.pos);
-        (hGrid.get(col) || []).slice(0, 4).forEach(({ y, color }) => {
-          const freq = Audio.noteForY(y, h);
-          if (freq) Audio.triggerNote(freq, colorCfg[color], sweeps.lr.vol, color);
-          dot(ctx, sweeps.lr.pos, y, color);
-        });
+    for (const id of SWEEP_IDS) {
+      const s = sweeps[id];
+      if (!s.active) continue;
+      const isH = horizontal(id);
+      const size = isH ? w : h;
+      s.pos = (reverse(id) ? 1 - visiblePhase(s) : visiblePhase(s)) * size;
+      const grid = isH ? Canvas.getHGrid() : Canvas.getVGrid();
+      if (Math.abs(s.pos - s.lastDot) >= 20) {
+        s.lastDot = s.pos;
+        for (const hit of (grid.get(Math.round(s.pos)) || []).slice(0, 4)) {
+          dot(ctx, isH ? s.pos : hit.x, isH ? hit.y : s.pos, hit.color);
+        }
       }
-      scanLine(ctx, 'v', sweeps.lr.pos, w, h, LINE_COLORS.lr);
-    }
-
-    // Right → Left
-    if (sweeps.rl.active) {
-      if (sweeps.rl.pos <= 0) { sweeps.rl.pos = w; sweeps.rl.lastTrig = 99999; }
-      sweeps.rl.pos -= hs;
-      if (sweeps.rl.pos < 0) { sweeps.rl.pos = w; sweeps.rl.lastTrig = 99999; }
-      if (shouldTrig(sweeps.rl, sweeps.rl.pos)) {
-        sweeps.rl.lastTrig = sweeps.rl.pos;
-        const col = Math.round(sweeps.rl.pos);
-        (hGrid.get(col) || []).slice(0, 4).forEach(({ y, color }) => {
-          const freq = Audio.noteForY(y, h);
-          if (freq) Audio.triggerNote(freq, colorCfg[color], sweeps.rl.vol, color);
-          dot(ctx, sweeps.rl.pos, y, color);
-        });
-      }
-      scanLine(ctx, 'v', sweeps.rl.pos, w, h, LINE_COLORS.rl);
-    }
-
-    // Top → Bottom
-    if (sweeps.tb.active) {
-      sweeps.tb.pos += vs;
-      if (sweeps.tb.pos > h) { sweeps.tb.pos = 0; sweeps.tb.lastTrig = -MIN_TRIG_PX; }
-      if (shouldTrig(sweeps.tb, sweeps.tb.pos)) {
-        sweeps.tb.lastTrig = sweeps.tb.pos;
-        const row = Math.round(sweeps.tb.pos);
-        const freq = Audio.noteForY(sweeps.tb.pos, h);
-        (vGrid.get(row) || []).slice(0, 4).forEach(({ x, color }) => {
-          if (freq) Audio.triggerNote(freq, colorCfg[color], sweeps.tb.vol, color);
-          dot(ctx, x, sweeps.tb.pos, color);
-        });
-      }
-      scanLine(ctx, 'h', sweeps.tb.pos, w, h, LINE_COLORS.tb);
-    }
-
-    // Bottom → Top
-    if (sweeps.bt.active) {
-      if (sweeps.bt.pos <= 0) { sweeps.bt.pos = h; sweeps.bt.lastTrig = 99999; }
-      sweeps.bt.pos -= vs;
-      if (sweeps.bt.pos < 0) { sweeps.bt.pos = h; sweeps.bt.lastTrig = 99999; }
-      if (shouldTrig(sweeps.bt, sweeps.bt.pos)) {
-        sweeps.bt.lastTrig = sweeps.bt.pos;
-        const row = Math.round(sweeps.bt.pos);
-        const freq = Audio.noteForY(sweeps.bt.pos, h);
-        (vGrid.get(row) || []).slice(0, 4).forEach(({ x, color }) => {
-          if (freq) Audio.triggerNote(freq, colorCfg[color], sweeps.bt.vol, color);
-          dot(ctx, x, sweeps.bt.pos, color);
-        });
-      }
-      scanLine(ctx, 'h', sweeps.bt.pos, w, h, LINE_COLORS.bt);
+      scanLine(ctx, isH ? 'v' : 'h', s.pos, w, h, LINE_COLORS[id]);
     }
   }
 
@@ -138,18 +118,38 @@ const Scanner = (() => {
     ctx.restore();
   }
 
-  function init()  { rafId = requestAnimationFrame(tick); }
-  function play()  { playing = true;  lastTime = null; Audio.resume(); }
-  function stop()  { playing = false; lastTime = null; }
+  function init() { rafId = requestAnimationFrame(tick); }
+  function play() {
+    if (playing) return;
+    Audio.resume();
+    playing = true;
+    scheduledTime = Audio.currentTime() + LOOKAHEAD;
+    schedule();
+    timerId = setInterval(schedule, 10);
+  }
+  function stop() {
+    for (const s of Object.values(sweeps)) s.phase = visiblePhase(s);
+    playing = false;
+    clearInterval(timerId);
+    timerId = null;
+    Audio.stopAll();
+  }
   function isPlaying() { return playing; }
-  function setBPM(b) { bpm = Math.max(20, Math.min(300, b)); }
+  function setBPM(b) {
+    const wasPlaying = playing;
+    if (wasPlaying) stop();
+    bpm = Math.max(20, Math.min(300, b));
+    if (wasPlaying) play();
+  }
 
   function toggleSweep(id) {
-    sweeps[id].active = !sweeps[id].active;
-    if (sweeps[id].active) {
-      sweeps[id].lastTrig = id === 'rl' || id === 'bt' ? 99999 : -MIN_TRIG_PX;
+    const s = sweeps[id];
+    if (s.active) {
+      s.phase = visiblePhase(s);
+      Audio.releaseSweep(id);
     }
-    return sweeps[id].active;
+    s.active = !s.active;
+    return s.active;
   }
 
   function setSweepVol(id, vol) { sweeps[id].vol = vol; }
