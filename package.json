@@ -1,0 +1,11 @@
+{
+  "name": "dibusynth",
+  "version": "1.0.0",
+  "description": "Draw-to-music synthesizer",
+  "scripts": {
+    "start": "serve ."
+  },
+  "devDependencies": {
+    "serve": "^14.2.4"
+  }
+}
