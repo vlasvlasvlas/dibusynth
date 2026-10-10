@@ -22,7 +22,7 @@
         <button id="btn-clear" aria-label="clear">✕</button>
         <div class="bpm-control">
           <button id="btn-bpm-down" aria-label="bpm down">−</button>
-          <span id="bpm-value">120</span>
+          <span id="bpm-value">90</span>
           <button id="btn-bpm-up" aria-label="bpm up">+</button>
         </div>
         <div class="vol-control">
@@ -45,7 +45,7 @@
           <input type="checkbox" id="chk-quantize" aria-label="quantize">
           <span>grid</span>
         </label>
-        <input type="range" id="slider-cell-size" min="10" max="80" step="5" value="30" title="Grid cell size" aria-label="cell size">
+        <input type="range" id="slider-cell-size" min="10" max="80" step="5" value="25" title="Grid cell size" aria-label="cell size">
         <div class="sep"></div>
         <label class="grad-label" title="Background color 1">
           <input type="color" id="color-bg1" value="#f0ebe0" aria-label="background color 1">
@@ -60,13 +60,54 @@
 
   <!-- Timbre config popover -->
   <div id="timbre-popover" class="hidden" role="dialog" aria-label="timbre config">
-    <div class="popover-inner">
-      <span class="popover-label">timbre</span>
-      <button class="wave-btn active" data-wave="sine">∿ sine</button>
-      <button class="wave-btn" data-wave="triangle">△ tri</button>
-      <button class="wave-btn" data-wave="square">⊓ sq</button>
-      <button class="wave-btn" data-wave="sawtooth">⊿ saw</button>
+    <div class="tp-header">
+      <div id="tp-swatch"></div>
+      <span class="tp-title">síntesis</span>
       <button id="timbre-close" aria-label="close">✕</button>
+    </div>
+
+    <!-- Onda + Octava -->
+    <div class="tp-row">
+      <span class="tp-lbl">onda</span>
+      <div class="tp-btngroup" id="wave-group">
+        <button class="wave-btn active" data-wave="sine">∿ sine</button>
+        <button class="wave-btn" data-wave="triangle">△ tri</button>
+        <button class="wave-btn" data-wave="square">⊓ sq</button>
+        <button class="wave-btn" data-wave="sawtooth">⊿ saw</button>
+      </div>
+      <span class="tp-lbl">oct</span>
+      <div class="tp-btngroup" id="oct-group">
+        <button class="oct-btn" data-oct="-2">-2</button>
+        <button class="oct-btn" data-oct="-1">-1</button>
+        <button class="oct-btn active" data-oct="0">0</button>
+        <button class="oct-btn" data-oct="1">+1</button>
+        <button class="oct-btn" data-oct="2">+2</button>
+      </div>
+    </div>
+
+    <!-- Filtro -->
+    <div class="tp-row">
+      <span class="tp-lbl">filtro</span>
+      <div class="tp-btngroup" id="filt-group">
+        <button class="filt-btn" data-filt="none">off</button>
+        <button class="filt-btn active" data-filt="lowpass">lpf</button>
+        <button class="filt-btn" data-filt="highpass">hpf</button>
+        <button class="filt-btn" data-filt="bandpass">bpf</button>
+      </div>
+      <span class="tp-lbl">cut</span>
+      <input type="range" id="t-cutoff" min="50" max="18000" step="50" value="1200">
+      <span class="tp-lbl">res</span>
+      <input type="range" id="t-q" min="0.1" max="20" step="0.1" value="2">
+    </div>
+
+    <!-- Release / Detune / Vol -->
+    <div class="tp-row">
+      <span class="tp-lbl">rel</span>
+      <input type="range" id="t-release" min="20" max="2000" step="10" value="300">
+      <span class="tp-lbl">det</span>
+      <input type="range" id="t-detune" min="-50" max="50" step="1" value="0">
+      <span class="tp-lbl">vol</span>
+      <input type="range" id="t-gain" min="0" max="1" step="0.01" value="0.8">
     </div>
   </div>
 

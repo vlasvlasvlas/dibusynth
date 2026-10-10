@@ -50,7 +50,7 @@ const Scanner = (() => {
         sweeps.lr.lastCol = col;
         (hGrid.get(col) || []).slice(0, 8).forEach(({ y, color }) => {
           const freq = Audio.noteForY(y, h);
-          if (freq) Audio.triggerNote(freq, colorCfg[color].waveform, sweeps.lr.vol);
+          if (freq) Audio.triggerNote(freq, colorCfg[color], sweeps.lr.vol);
           dot(ctx, sweeps.lr.pos, y, color);
         });
       }
@@ -67,7 +67,7 @@ const Scanner = (() => {
         sweeps.rl.lastCol = col;
         (hGrid.get(col) || []).slice(0, 8).forEach(({ y, color }) => {
           const freq = Audio.noteForY(y, h);
-          if (freq) Audio.triggerNote(freq, colorCfg[color].waveform, sweeps.rl.vol);
+          if (freq) Audio.triggerNote(freq, colorCfg[color], sweeps.rl.vol);
           dot(ctx, sweeps.rl.pos, y, color);
         });
       }

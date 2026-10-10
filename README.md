@@ -1,40 +1,37 @@
 # dibusynth
 
-Draw on the canvas. Press play. Watch the scanner turn your drawing into music.
+Primera versión. Sintetizador experimental que convierte dibujos en música.
 
-## How it works
+## Qué hace
 
-- Draw freehand strokes with different colors
-- Press ▶ to start the scanner
-- Enable sweep directions (→ ← ↓ ↑) — each sweeps across the canvas independently
-- **Y-axis position → pitch** (top = high, bottom = low)
-- **Color → timbre** (long-press a color swatch to change its waveform: sine / triangle / square / sawtooth)
-- Change Key and Scale for different moods — takes effect immediately
-- Multiple sweeps active at once create layered textures
-- **Grid quantize**: toggle "grid" to snap drawing to cells — each cell is one note, clean discrete jumps. Off = smooth glissando following every pixel.
+Dibujás sobre un canvas y un barrido de línea convierte lo que dibujaste en sonido. La posición vertical (eje Y) determina el tono: arriba es agudo, abajo es grave. El color del trazo determina el timbre.
 
-## Controls
+## Cómo usarlo
 
-| Control | Action |
-|---------|--------|
-| ▶ / ⏸ | Play / pause scanner |
-| ✏ / ◻ | Pencil / eraser tool |
-| ↩ | Undo last stroke |
-| ✕ | Clear canvas |
-| − 120 + | BPM |
-| vol slider | Master volume |
-| Color swatches | Select draw color (long-press = configure timbre) |
-| → ← ↓ ↑ | Toggle sweep directions (each has its own volume slider) |
-| Key / Scale | Root note and musical scale |
-| grid checkbox | Quantize on/off |
-| grid size slider | Cell size (smaller = smoother pitch, larger = more quantized) |
-| Color pickers | Background gradient colors |
-| ↕ / ↔ | Gradient direction |
+1. Elegí un color en la fila de swatches
+2. Dibujá sobre el canvas (lápiz, línea, círculo)
+3. Activá uno o más barridos (→ ← ↓ ↑) con sus botones
+4. Presioná ▶ para reproducir
 
-## Open locally
+## Controles
 
-Just open `index.html` in any modern browser. No server needed, no build step.
+- **Herramientas**: lápiz, línea plana, línea punteada, círculo, borrador
+- **Deshacer / limpiar**: ↩ y ✕
+- **BPM**: velocidad de los barridos
+- **Vol**: volumen general
+- **Grid**: cuantiza el dibujo a una grilla (se puede activar/desactivar; el dibujo original se restaura al apagar)
+- **Color de fondo**: dos pickers + dirección del degradé
+- **Timbre por color**: mantené presionado un swatch (o click derecho) para editar la síntesis de ese color — onda, octava, filtro, release, detune, volumen
 
-## Stack
+## Correr localmente
 
-Vanilla JS · Web Audio API · Canvas 2D · Pointer Events · No dependencies
+```bash
+npm install
+npm start
+```
+
+Abre en `http://localhost:3000`
+
+## Tecnologías
+
+Vanilla JS + Web Audio API + Canvas 2D. Sin frameworks, sin build step. Compatible con GitHub Pages.

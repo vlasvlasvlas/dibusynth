@@ -3,10 +3,17 @@ const Canvas = (() => {
     '#27ae60','#e74c3c','#8e44ad','#f39c12',
     '#2980b9','#e91e8c','#5dade2','#222222','#f0a500'
   ];
-  const DEFAULT_WAVEFORMS = {
-    '#27ae60':'sine',  '#e74c3c':'sawtooth', '#8e44ad':'triangle',
-    '#f39c12':'square','#2980b9':'sine',     '#e91e8c':'triangle',
-    '#5dade2':'sine',  '#222222':'square',   '#f0a500':'sawtooth'
+  // Full synthesis preset per color
+  const COLOR_PRESETS = {
+    '#27ae60': { waveform:'sine',     octave:0,  detune:0,  filterType:'lowpass',  filterFreq:3500, filterQ:1,   release:600, gain:0.75 }, // bell pad
+    '#e74c3c': { waveform:'triangle', octave:-1, detune:5,  filterType:'lowpass',  filterFreq:1800, filterQ:1.5, release:500, gain:0.80 }, // warm bass
+    '#8e44ad': { waveform:'triangle', octave:1,  detune:0,  filterType:'lowpass',  filterFreq:5000, filterQ:1,   release:350, gain:0.70 }, // flute
+    '#f39c12': { waveform:'sine',     octave:0,  detune:7,  filterType:'lowpass',  filterFreq:4000, filterQ:1,   release:400, gain:0.72 }, // warm tone
+    '#2980b9': { waveform:'sine',     octave:0,  detune:0,  filterType:'lowpass',  filterFreq:6000, filterQ:1,   release:900, gain:0.60 }, // pad
+    '#e91e8c': { waveform:'triangle', octave:0,  detune:3,  filterType:'bandpass', filterFreq:2200, filterQ:2,   release:300, gain:0.75 }, // pluck
+    '#5dade2': { waveform:'sine',     octave:1,  detune:0,  filterType:'none',     filterFreq:8000, filterQ:1,   release:700, gain:0.60 }, // airy
+    '#222222': { waveform:'sine',     octave:-1, detune:0,  filterType:'lowpass',  filterFreq:800,  filterQ:1,   release:600, gain:0.85 }, // sub
+    '#f0a500': { waveform:'triangle', octave:0,  detune:4,  filterType:'lowpass',  filterFreq:3000, filterQ:1.2, release:450, gain:0.72 }, // mellow saw
   };
   const ERASE_RADIUS = 24;
   const FREE_WIDTH   = 4;
@@ -20,7 +27,7 @@ const Canvas = (() => {
   let activeTool    = 'pencil';
   let currentColor  = COLORS[0];
   let quantize      = false;
-  let cellSize      = 30;
+  let cellSize      = 25;
   let hGrid         = new Map();
   let vGrid         = new Map();
   const colorConfig = {};
@@ -28,7 +35,7 @@ const Canvas = (() => {
   function init(canvasEl) {
     el  = canvasEl;
     ctx = el.getContext('2d');
-    COLORS.forEach(c => { colorConfig[c] = { waveform: DEFAULT_WAVEFORMS[c] }; });
+    COLORS.forEach(c => { colorConfig[c] = { ...COLOR_PRESETS[c] }; });
     resize();
     bindEvents();
   }
@@ -340,11 +347,12 @@ const Canvas = (() => {
   function getCtx()         { return ctx; }
   function getColorConfig() { return colorConfig; }
   function setColorWaveform(color, waveform) { colorConfig[color].waveform = waveform; }
+  function setColorParam(color, param, value) { colorConfig[color][param] = value; }
 
   return {
     init, resize, redraw, undo, clear,
     setTool, setColor, setQuantize, setCellSize,
-    getHGrid, getVGrid, getSize, getCtx, getColorConfig, setColorWaveform,
+    getHGrid, getVGrid, getSize, getCtx, getColorConfig, setColorWaveform, setColorParam,
     COLORS
   };
 })();

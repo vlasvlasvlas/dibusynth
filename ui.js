@@ -1,7 +1,7 @@
 (function UI() {
   let timbreTargetColor = null;
   let longPressTimer    = null;
-  let bpm = 120;
+  let bpm = 90;
   let gradDir = 'to bottom';
   let bg1 = '#f0ebe0', bg2 = '#ffffff';
 
@@ -114,14 +114,49 @@
   // ── Timbre popover ─────────────────────────────────────────────────────────
   function bindTimbrePopover() {
     $('timbre-close').addEventListener('click', closeTimbrePopover);
+
+    // Waveform buttons
     document.querySelectorAll('.wave-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         if (!timbreTargetColor) return;
-        Canvas.setColorWaveform(timbreTargetColor, btn.dataset.wave);
-        document.querySelectorAll('.wave-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        Canvas.setColorParam(timbreTargetColor, 'waveform', btn.dataset.wave);
+        setActiveInGroup('wave-group', btn);
       });
     });
+
+    // Octave buttons
+    document.querySelectorAll('.oct-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!timbreTargetColor) return;
+        Canvas.setColorParam(timbreTargetColor, 'octave', parseInt(btn.dataset.oct, 10));
+        setActiveInGroup('oct-group', btn);
+      });
+    });
+
+    // Filter type buttons
+    document.querySelectorAll('.filt-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!timbreTargetColor) return;
+        Canvas.setColorParam(timbreTargetColor, 'filterType', btn.dataset.filt);
+        setActiveInGroup('filt-group', btn);
+      });
+    });
+
+    // Sliders — update in real time
+    const sliderMap = {
+      't-cutoff':  { param: 'filterFreq', parse: parseFloat },
+      't-q':       { param: 'filterQ',    parse: parseFloat },
+      't-release': { param: 'release',    parse: parseFloat },
+      't-detune':  { param: 'detune',     parse: parseFloat },
+      't-gain':    { param: 'gain',       parse: parseFloat },
+    };
+    Object.entries(sliderMap).forEach(([id, { param, parse }]) => {
+      $(id).addEventListener('input', e => {
+        if (!timbreTargetColor) return;
+        Canvas.setColorParam(timbreTargetColor, param, parse(e.target.value));
+      });
+    });
+
     // Close on outside tap
     document.addEventListener('pointerdown', e => {
       const pop = $('timbre-popover');
@@ -129,12 +164,32 @@
     }, true);
   }
 
+  function setActiveInGroup(groupId, activeBtn) {
+    document.querySelectorAll(`#${groupId} button`).forEach(b => b.classList.remove('active'));
+    activeBtn.classList.add('active');
+  }
+
   function openTimbrePopover(color) {
     timbreTargetColor = color;
     const cfg = Canvas.getColorConfig()[color];
-    document.querySelectorAll('.wave-btn').forEach(b => {
-      b.classList.toggle('active', b.dataset.wave === cfg.waveform);
-    });
+
+    // Swatch color
+    $('tp-swatch').style.background = color;
+
+    // Sync all controls to current cfg
+    document.querySelectorAll('.wave-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.wave === cfg.waveform));
+    document.querySelectorAll('.oct-btn').forEach(b =>
+      b.classList.toggle('active', parseInt(b.dataset.oct, 10) === cfg.octave));
+    document.querySelectorAll('.filt-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.filt === cfg.filterType));
+
+    $('t-cutoff').value  = cfg.filterFreq ?? 2000;
+    $('t-q').value       = cfg.filterQ    ?? 1;
+    $('t-release').value = cfg.release    ?? 300;
+    $('t-detune').value  = cfg.detune     ?? 0;
+    $('t-gain').value    = cfg.gain       ?? 0.8;
+
     $('timbre-popover').classList.remove('hidden');
   }
 
@@ -253,5 +308,11 @@
     Scanner.init();
     window.addEventListener('resize', () => setTimeout(() => Canvas.resize(), 50));
     init();
+    // Set panel height CSS var so timbre popover positions above it
+    const panel = document.getElementById('panel');
+    document.documentElement.style.setProperty('--panel-h', panel.offsetHeight + 'px');
+    new ResizeObserver(() => {
+      document.documentElement.style.setProperty('--panel-h', panel.offsetHeight + 'px');
+    }).observe(panel);
   });
 })();

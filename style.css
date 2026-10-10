@@ -7,7 +7,7 @@
   --panel-border: #ddd;
   --body-bg: #e8e3da;
   --text: #222;
-  --cell-size: 30px;
+  --cell-size: 25px;
   --bg1: #f0ebe0;
   --bg2: #ffffff;
   --grad-dir: to bottom;
@@ -178,25 +178,68 @@ input[type=color] {
 /* Timbre popover */
 #timbre-popover {
   position: fixed;
-  bottom: calc(var(--panel-h) + 10px);
+  bottom: calc(var(--panel-h, 140px) + 12px);
   left: 50%;
   transform: translateX(-50%);
   background: #fff;
   border: 1px solid #ddd;
-  border-radius: 14px;
-  padding: 10px 12px;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+  border-radius: 16px;
+  padding: 12px 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
   z-index: 200;
-  white-space: nowrap;
+  min-width: min(360px, 96vw);
+  max-width: 96vw;
 }
 #timbre-popover.hidden { display: none; }
-.popover-inner { display: flex; align-items: center; gap: 8px; }
-.popover-label { font-size: 11px; color: #888; }
-.wave-btn {
-  border-radius: 8px;
-  width: auto;
-  padding: 5px 10px;
-  font-size: 12px;
+
+.tp-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
 }
-.wave-btn.active { background: #222; color: #fff; border-color: #222; }
-#timbre-close { width: 26px; height: 26px; font-size: 12px; }
+#tp-swatch {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+  flex-shrink: 0;
+}
+.tp-title { font-size: 11px; color: #999; flex: 1; font-weight: 600; letter-spacing: .04em; }
+#timbre-close { width: 26px; height: 26px; font-size: 12px; border-radius: 8px; }
+
+.tp-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tp-row::-webkit-scrollbar { display: none; }
+.tp-row:last-child { margin-bottom: 0; }
+
+.tp-lbl {
+  font-size: 10px;
+  color: #aaa;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 20px;
+  text-align: right;
+}
+
+.tp-btngroup {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.tp-btngroup button {
+  border-radius: 6px;
+  width: auto;
+  height: 26px;
+  padding: 0 8px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.tp-btngroup button.active { background: #222; color: #fff; border-color: #222; }
+
+.tp-row input[type=range] { width: 72px; flex-shrink: 0; }
