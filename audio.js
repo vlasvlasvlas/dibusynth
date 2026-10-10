@@ -34,9 +34,19 @@ const Audio = (() => {
 
   function init() {
     actx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // Compressor prevents clipping when many voices play together
+    const comp = actx.createDynamicsCompressor();
+    comp.threshold.value = -18;
+    comp.knee.value      = 12;
+    comp.ratio.value     = 6;
+    comp.attack.value    = 0.003;
+    comp.release.value   = 0.25;
+
     masterGain = actx.createGain();
     masterGain.gain.value = 0.7;
-    masterGain.connect(actx.destination);
+    masterGain.connect(comp);
+    comp.connect(actx.destination);
 
     for (let i = 0; i < VOICE_COUNT; i++) {
       const envGain = actx.createGain();
@@ -51,15 +61,31 @@ const Audio = (() => {
     if (actx && actx.state === 'suspended') actx.resume();
   }
 
+  const STEAL_RAMP = 0.012; // 12ms fade-out before stealing a voice
+
+  function releaseVoice(v) {
+    if (!v.osc) return;
+    const now = actx.currentTime;
+    // Ramp down gracefully to avoid click
+    v.envGain.gain.cancelScheduledValues(now);
+    v.envGain.gain.setValueAtTime(v.envGain.gain.value, now);
+    v.envGain.gain.linearRampToValueAtTime(0, now + STEAL_RAMP);
+    const oscRef = v.osc;
+    const filtRef = v.filter;
+    v.osc    = null;
+    v.filter = null;
+    v.active = false;
+    try { oscRef.stop(now + STEAL_RAMP + 0.002); } catch (_) {}
+    if (filtRef) setTimeout(() => { try { filtRef.disconnect(); } catch (_) {} }, (STEAL_RAMP + 0.01) * 1000);
+  }
+
   function getVoice() {
-    let v = voices.find(v => !v.active);
-    if (!v) {
-      v = voices.reduce((old, cur) => cur.startTime < old.startTime ? cur : old, voices[0]);
-      if (v.osc)    { try { v.osc.stop(); }        catch (_) {} v.osc    = null; }
-      if (v.filter) { try { v.filter.disconnect(); } catch (_) {} v.filter = null; }
-      v.active = false;
-    }
-    return v;
+    const free = voices.find(v => !v.active);
+    if (free) return free;
+    // Steal oldest voice with smooth fade-out
+    const oldest = voices.reduce((a, b) => b.startTime < a.startTime ? b : a, voices[0]);
+    releaseVoice(oldest);
+    return oldest;
   }
 
   // cfg = full colorConfig object { waveform, octave, detune, filterType, filterFreq, filterQ, release, gain }
@@ -81,27 +107,27 @@ const Audio = (() => {
     const now = actx.currentTime;
     const v   = getVoice();
 
-    if (v.osc)    { try { v.osc.stop(); }        catch (_) {} v.osc    = null; }
+    // Clean up any lingering nodes on this voice slot
+    if (v.osc)    { try { v.osc.stop(); } catch (_) {} v.osc = null; }
     if (v.filter) { try { v.filter.disconnect(); } catch (_) {} v.filter = null; }
 
     const osc = actx.createOscillator();
-    osc.type = waveform;
+    osc.type            = waveform;
     osc.frequency.value = freq * Math.pow(2, octave);
     osc.detune.value    = detune;
 
-    const peak      = 0.45 * gain * (sweepVol !== undefined ? sweepVol : 0.6);
-    const attackSec = 0.005;
-    const relSec    = Math.max(0.02, release / 1000);
-    const duration  = attackSec + relSec + 0.05;
+    const peak      = 0.42 * gain * (sweepVol !== undefined ? sweepVol : 0.6);
+    const attackSec = 0.015;  // 15ms attack — eliminates onset click
+    const relSec    = Math.max(0.05, release / 1000);
+    const duration  = attackSec + relSec + 0.02;
 
     const env = v.envGain.gain;
     env.cancelScheduledValues(now);
     env.setValueAtTime(0, now);
     env.linearRampToValueAtTime(peak, now + attackSec);
-    env.setValueAtTime(peak, now + attackSec);
-    env.linearRampToValueAtTime(0, now + attackSec + relSec);
+    // Exponential release is smoother than linear for tails
+    env.setTargetAtTime(0, now + attackSec, relSec / 4);
 
-    let endNode = v.envGain;
     if (filterType !== 'none') {
       const filt = actx.createBiquadFilter();
       filt.type            = filterType;

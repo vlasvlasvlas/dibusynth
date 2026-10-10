@@ -71,12 +71,24 @@
   function buildColorRow() {
     const row = $('row-colors');
     Canvas.COLORS.forEach((color, i) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'swatch-wrap';
+
       const sw = document.createElement('div');
       sw.className = 'color-swatch' + (i === 0 ? ' selected' : '');
       sw.style.background = color;
       sw.setAttribute('role', 'button');
       sw.setAttribute('aria-label', 'color ' + color);
       sw.tabIndex = 0;
+
+      const editBtn = document.createElement('button');
+      editBtn.className  = 'swatch-edit';
+      editBtn.textContent = '⚙';
+      editBtn.setAttribute('aria-label', 'editar timbre ' + color);
+      editBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        openTimbrePopover(color);
+      });
 
       sw.addEventListener('pointerdown', () => {
         longPressTimer = setTimeout(() => {
@@ -101,7 +113,8 @@
         if (e.key === 'Enter' || e.key === ' ') selectColor(color, sw);
       });
 
-      row.appendChild(sw);
+      wrap.append(sw, editBtn);
+      row.appendChild(wrap);
     });
   }
 
@@ -121,6 +134,7 @@
         if (!timbreTargetColor) return;
         Canvas.setColorParam(timbreTargetColor, 'waveform', btn.dataset.wave);
         setActiveInGroup('wave-group', btn);
+        previewTimbre();
       });
     });
 
@@ -130,6 +144,7 @@
         if (!timbreTargetColor) return;
         Canvas.setColorParam(timbreTargetColor, 'octave', parseInt(btn.dataset.oct, 10));
         setActiveInGroup('oct-group', btn);
+        previewTimbre();
       });
     });
 
@@ -139,10 +154,11 @@
         if (!timbreTargetColor) return;
         Canvas.setColorParam(timbreTargetColor, 'filterType', btn.dataset.filt);
         setActiveInGroup('filt-group', btn);
+        previewTimbre();
       });
     });
 
-    // Sliders — update in real time
+    // Sliders — update in real time + preview note
     const sliderMap = {
       't-cutoff':  { param: 'filterFreq', parse: parseFloat },
       't-q':       { param: 'filterQ',    parse: parseFloat },
@@ -154,6 +170,7 @@
       $(id).addEventListener('input', e => {
         if (!timbreTargetColor) return;
         Canvas.setColorParam(timbreTargetColor, param, parse(e.target.value));
+        previewTimbre();
       });
     });
 
@@ -196,6 +213,13 @@
   function closeTimbrePopover() {
     $('timbre-popover').classList.add('hidden');
     timbreTargetColor = null;
+  }
+
+  function previewTimbre() {
+    if (!timbreTargetColor) return;
+    Audio.resume();
+    const cfg = Canvas.getColorConfig()[timbreTargetColor];
+    Audio.triggerNote(440, cfg, 0.7); // A4 as preview pitch
   }
 
   // ── Sweep row ──────────────────────────────────────────────────────────────

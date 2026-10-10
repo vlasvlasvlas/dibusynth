@@ -107,6 +107,13 @@ input[type=range] { cursor: pointer; accent-color: #4a90d9; }
 .vol-control input[type=range] { width: 64px; }
 
 /* Color swatches */
+.swatch-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
 .color-swatch {
   width: 30px;
   height: 30px;
@@ -118,6 +125,22 @@ input[type=range] { cursor: pointer; accent-color: #4a90d9; }
   transition: border-color 0.1s;
 }
 .color-swatch.selected { border-color: #222; }
+.swatch-edit {
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  background: #f8f8f8;
+  color: #888;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.swatch-edit:hover { background: #eee; color: #333; }
 
 /* Sweep items */
 .sweep-item {
