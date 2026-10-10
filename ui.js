@@ -219,7 +219,7 @@
     if (!timbreTargetColor) return;
     Audio.resume();
     const cfg = Canvas.getColorConfig()[timbreTargetColor];
-    Audio.triggerNote(440, cfg, 0.7); // A4 as preview pitch
+    Audio.triggerNote(440, cfg, 0.7, timbreTargetColor);
   }
 
   // ── Sweep row ──────────────────────────────────────────────────────────────

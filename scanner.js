@@ -2,18 +2,21 @@ const Scanner = (() => {
   const SWEEP_IDS    = ['lr','rl','tb','bt'];
   const SWEEP_LABELS = { lr:'→', rl:'←', tb:'↓', bt:'↑' };
   const LINE_COLORS  = {
-    lr:'rgba(0,0,0,0.35)',   rl:'rgba(60,100,200,0.35)',
-    tb:'rgba(0,0,0,0.35)',   bt:'rgba(180,60,60,0.35)'
+    lr:'rgba(0,0,0,0.30)',   rl:'rgba(60,100,200,0.30)',
+    tb:'rgba(0,150,80,0.30)', bt:'rgba(180,60,60,0.30)'
   };
+
+  // Minimum pixels between note triggers per sweep — prevents flooding voice pools
+  const MIN_TRIG_PX = 12;
 
   const sweeps = {
-    lr: { active:false, pos:0, vol:0.6, lastCol:-1 },
-    rl: { active:false, pos:0, vol:0.6, lastCol:-1 },
-    tb: { active:false, pos:0, vol:0.6, lastCol:-1 },
-    bt: { active:false, pos:0, vol:0.6, lastCol:-1 }
+    lr: { active:false, pos:0, vol:0.6, lastTrig:-MIN_TRIG_PX },
+    rl: { active:false, pos:0, vol:0.6, lastTrig:99999 },
+    tb: { active:false, pos:0, vol:0.6, lastTrig:-MIN_TRIG_PX },
+    bt: { active:false, pos:0, vol:0.6, lastTrig:99999 }
   };
 
-  let bpm = 120;
+  let bpm = 90;
   const BEATS_PER_SWEEP = 4;
   let playing  = false;
   let lastTime = null;
@@ -23,17 +26,21 @@ const Scanner = (() => {
     return size / (BEATS_PER_SWEEP * (60000 / bpm));
   }
 
+  function shouldTrig(sweep, pos) {
+    return Math.abs(pos - sweep.lastTrig) >= MIN_TRIG_PX;
+  }
+
   function tick(now) {
     rafId = requestAnimationFrame(tick);
 
     const dt = lastTime !== null ? Math.min(now - lastTime, 100) : 0;
     lastTime = now;
 
-    const { w, h }  = Canvas.getSize();
-    const hGrid      = Canvas.getHGrid();
-    const vGrid      = Canvas.getVGrid();
-    const colorCfg   = Canvas.getColorConfig();
-    const ctx        = Canvas.getCtx();
+    const { w, h } = Canvas.getSize();
+    const hGrid    = Canvas.getHGrid();
+    const vGrid    = Canvas.getVGrid();
+    const colorCfg = Canvas.getColorConfig();
+    const ctx      = Canvas.getCtx();
 
     Canvas.redraw();
     if (!playing) return;
@@ -44,13 +51,13 @@ const Scanner = (() => {
     // Left → Right
     if (sweeps.lr.active) {
       sweeps.lr.pos += hs;
-      if (sweeps.lr.pos > w) { sweeps.lr.pos = 0; sweeps.lr.lastCol = -1; }
-      const col = Math.round(sweeps.lr.pos);
-      if (col !== sweeps.lr.lastCol) {
-        sweeps.lr.lastCol = col;
-        (hGrid.get(col) || []).slice(0, 8).forEach(({ y, color }) => {
+      if (sweeps.lr.pos > w) { sweeps.lr.pos = 0; sweeps.lr.lastTrig = -MIN_TRIG_PX; }
+      if (shouldTrig(sweeps.lr, sweeps.lr.pos)) {
+        sweeps.lr.lastTrig = sweeps.lr.pos;
+        const col = Math.round(sweeps.lr.pos);
+        (hGrid.get(col) || []).slice(0, 4).forEach(({ y, color }) => {
           const freq = Audio.noteForY(y, h);
-          if (freq) Audio.triggerNote(freq, colorCfg[color], sweeps.lr.vol);
+          if (freq) Audio.triggerNote(freq, colorCfg[color], sweeps.lr.vol, color);
           dot(ctx, sweeps.lr.pos, y, color);
         });
       }
@@ -59,15 +66,15 @@ const Scanner = (() => {
 
     // Right → Left
     if (sweeps.rl.active) {
-      if (sweeps.rl.pos <= 0) { sweeps.rl.pos = w; sweeps.rl.lastCol = -1; }
+      if (sweeps.rl.pos <= 0) { sweeps.rl.pos = w; sweeps.rl.lastTrig = 99999; }
       sweeps.rl.pos -= hs;
-      if (sweeps.rl.pos < 0) { sweeps.rl.pos = w; sweeps.rl.lastCol = -1; }
-      const col = Math.round(sweeps.rl.pos);
-      if (col !== sweeps.rl.lastCol) {
-        sweeps.rl.lastCol = col;
-        (hGrid.get(col) || []).slice(0, 8).forEach(({ y, color }) => {
+      if (sweeps.rl.pos < 0) { sweeps.rl.pos = w; sweeps.rl.lastTrig = 99999; }
+      if (shouldTrig(sweeps.rl, sweeps.rl.pos)) {
+        sweeps.rl.lastTrig = sweeps.rl.pos;
+        const col = Math.round(sweeps.rl.pos);
+        (hGrid.get(col) || []).slice(0, 4).forEach(({ y, color }) => {
           const freq = Audio.noteForY(y, h);
-          if (freq) Audio.triggerNote(freq, colorCfg[color], sweeps.rl.vol);
+          if (freq) Audio.triggerNote(freq, colorCfg[color], sweeps.rl.vol, color);
           dot(ctx, sweeps.rl.pos, y, color);
         });
       }
@@ -77,13 +84,13 @@ const Scanner = (() => {
     // Top → Bottom
     if (sweeps.tb.active) {
       sweeps.tb.pos += vs;
-      if (sweeps.tb.pos > h) { sweeps.tb.pos = 0; sweeps.tb.lastCol = -1; }
-      const row = Math.round(sweeps.tb.pos);
-      if (row !== sweeps.tb.lastCol) {
-        sweeps.tb.lastCol = row;
+      if (sweeps.tb.pos > h) { sweeps.tb.pos = 0; sweeps.tb.lastTrig = -MIN_TRIG_PX; }
+      if (shouldTrig(sweeps.tb, sweeps.tb.pos)) {
+        sweeps.tb.lastTrig = sweeps.tb.pos;
+        const row = Math.round(sweeps.tb.pos);
         const freq = Audio.noteForY(sweeps.tb.pos, h);
-        (vGrid.get(row) || []).slice(0, 8).forEach(({ x, color }) => {
-          if (freq) Audio.triggerNote(freq, colorCfg[color].waveform, sweeps.tb.vol);
+        (vGrid.get(row) || []).slice(0, 4).forEach(({ x, color }) => {
+          if (freq) Audio.triggerNote(freq, colorCfg[color], sweeps.tb.vol, color);
           dot(ctx, x, sweeps.tb.pos, color);
         });
       }
@@ -92,15 +99,15 @@ const Scanner = (() => {
 
     // Bottom → Top
     if (sweeps.bt.active) {
-      if (sweeps.bt.pos <= 0) { sweeps.bt.pos = h; sweeps.bt.lastCol = -1; }
+      if (sweeps.bt.pos <= 0) { sweeps.bt.pos = h; sweeps.bt.lastTrig = 99999; }
       sweeps.bt.pos -= vs;
-      if (sweeps.bt.pos < 0) { sweeps.bt.pos = h; sweeps.bt.lastCol = -1; }
-      const row = Math.round(sweeps.bt.pos);
-      if (row !== sweeps.bt.lastCol) {
-        sweeps.bt.lastCol = row;
+      if (sweeps.bt.pos < 0) { sweeps.bt.pos = h; sweeps.bt.lastTrig = 99999; }
+      if (shouldTrig(sweeps.bt, sweeps.bt.pos)) {
+        sweeps.bt.lastTrig = sweeps.bt.pos;
+        const row = Math.round(sweeps.bt.pos);
         const freq = Audio.noteForY(sweeps.bt.pos, h);
-        (vGrid.get(row) || []).slice(0, 8).forEach(({ x, color }) => {
-          if (freq) Audio.triggerNote(freq, colorCfg[color].waveform, sweeps.bt.vol);
+        (vGrid.get(row) || []).slice(0, 4).forEach(({ x, color }) => {
+          if (freq) Audio.triggerNote(freq, colorCfg[color], sweeps.bt.vol, color);
           dot(ctx, x, sweeps.bt.pos, color);
         });
       }
@@ -139,7 +146,9 @@ const Scanner = (() => {
 
   function toggleSweep(id) {
     sweeps[id].active = !sweeps[id].active;
-    if (sweeps[id].active) sweeps[id].lastCol = -1;
+    if (sweeps[id].active) {
+      sweeps[id].lastTrig = id === 'rl' || id === 'bt' ? 99999 : -MIN_TRIG_PX;
+    }
     return sweeps[id].active;
   }
 

@@ -11,13 +11,16 @@ const Audio = (() => {
   const ROOT_MIDI = {
     C:60,'C#':61,D:62,'D#':63,E:64,F:65,'F#':66,G:67,'G#':68,A:69,'A#':70,B:71
   };
-  const VOICE_COUNT = 16;
+
+  const VOICES_PER_COLOR = 4; // dedicated pool per color — no cross-color stealing
   const OCTAVES = 4;
+  const STEAL_RAMP = 0.010;
 
   let actx, masterGain;
-  const voices = [];
-  let currentScale = [];
-  let currentRoot  = 'C';
+  // Map: color hex → voice pool array
+  const colorPools = {};
+  let currentScale  = [];
+  let currentRoot   = 'C';
   let currentScaleId = 'major';
 
   function midiToHz(m) { return 440 * Math.pow(2, (m - 69) / 12); }
@@ -32,64 +35,67 @@ const Audio = (() => {
     return notes.sort((a, b) => b - a);
   }
 
+  function makeVoice() {
+    const envGain = actx.createGain();
+    envGain.gain.value = 0;
+    envGain.connect(masterGain);
+    return { osc: null, filter: null, envGain, active: false, startTime: -1 };
+  }
+
   function init() {
     actx = new (window.AudioContext || window.webkitAudioContext)();
 
-    // Compressor prevents clipping when many voices play together
+    // Gentle compressor — prevents clipping, minimal pumping
     const comp = actx.createDynamicsCompressor();
-    comp.threshold.value = -18;
-    comp.knee.value      = 12;
-    comp.ratio.value     = 6;
-    comp.attack.value    = 0.003;
-    comp.release.value   = 0.25;
+    comp.threshold.value = -24;
+    comp.knee.value      = 16;
+    comp.ratio.value     = 4;
+    comp.attack.value    = 0.010;
+    comp.release.value   = 0.4;
 
     masterGain = actx.createGain();
-    masterGain.gain.value = 0.7;
+    masterGain.gain.value = 0.65;
     masterGain.connect(comp);
     comp.connect(actx.destination);
 
-    for (let i = 0; i < VOICE_COUNT; i++) {
-      const envGain = actx.createGain();
-      envGain.gain.value = 0;
-      envGain.connect(masterGain);
-      voices.push({ osc: null, filter: null, envGain, active: false, startTime: -1 });
-    }
     currentScale = buildScale(currentRoot, currentScaleId);
+  }
+
+  function ensurePool(color) {
+    if (!colorPools[color]) {
+      colorPools[color] = Array.from({ length: VOICES_PER_COLOR }, makeVoice);
+    }
+    return colorPools[color];
   }
 
   function resume() {
     if (actx && actx.state === 'suspended') actx.resume();
   }
 
-  const STEAL_RAMP = 0.012; // 12ms fade-out before stealing a voice
-
   function releaseVoice(v) {
     if (!v.osc) return;
     const now = actx.currentTime;
-    // Ramp down gracefully to avoid click
     v.envGain.gain.cancelScheduledValues(now);
     v.envGain.gain.setValueAtTime(v.envGain.gain.value, now);
     v.envGain.gain.linearRampToValueAtTime(0, now + STEAL_RAMP);
-    const oscRef = v.osc;
+    const oscRef  = v.osc;
     const filtRef = v.filter;
     v.osc    = null;
     v.filter = null;
     v.active = false;
     try { oscRef.stop(now + STEAL_RAMP + 0.002); } catch (_) {}
-    if (filtRef) setTimeout(() => { try { filtRef.disconnect(); } catch (_) {} }, (STEAL_RAMP + 0.01) * 1000);
+    if (filtRef) {
+      setTimeout(() => { try { filtRef.disconnect(); } catch (_) {} }, (STEAL_RAMP + 0.01) * 1000);
+    }
   }
 
-  function getVoice() {
-    const free = voices.find(v => !v.active);
-    if (free) return free;
-    // Steal oldest voice with smooth fade-out
-    const oldest = voices.reduce((a, b) => b.startTime < a.startTime ? b : a, voices[0]);
-    releaseVoice(oldest);
-    return oldest;
+  function getFreeVoice(pool) {
+    return pool.find(v => !v.active) ||
+      pool.reduce((a, b) => b.startTime < a.startTime ? b : a, pool[0]);
   }
 
-  // cfg = full colorConfig object { waveform, octave, detune, filterType, filterFreq, filterQ, release, gain }
-  function triggerNote(freq, cfg, sweepVol) {
+  // color param routes to the dedicated pool for that color
+  function triggerNote(freq, cfg, sweepVol, color) {
     if (!actx) return;
     resume();
 
@@ -100,14 +106,16 @@ const Audio = (() => {
       filterType = 'none',
       filterFreq = 2000,
       filterQ    = 1,
-      release    = 300,
-      gain       = 0.8
+      release    = 400,
+      gain       = 0.75
     } = cfg || {};
 
-    const now = actx.currentTime;
-    const v   = getVoice();
+    const pool = ensurePool(color || '_default');
+    const now  = actx.currentTime;
+    const v    = getFreeVoice(pool);
 
-    // Clean up any lingering nodes on this voice slot
+    // Steal gracefully if needed
+    if (v.active) releaseVoice(v);
     if (v.osc)    { try { v.osc.stop(); } catch (_) {} v.osc = null; }
     if (v.filter) { try { v.filter.disconnect(); } catch (_) {} v.filter = null; }
 
@@ -116,17 +124,18 @@ const Audio = (() => {
     osc.frequency.value = freq * Math.pow(2, octave);
     osc.detune.value    = detune;
 
-    const peak      = 0.42 * gain * (sweepVol !== undefined ? sweepVol : 0.6);
-    const attackSec = 0.015;  // 15ms attack — eliminates onset click
-    const relSec    = Math.max(0.05, release / 1000);
-    const duration  = attackSec + relSec + 0.02;
+    const peak      = 0.40 * gain * (sweepVol !== undefined ? sweepVol : 0.6);
+    const attackSec = 0.018;
+    const relSec    = Math.max(0.08, release / 1000);
+    const duration  = attackSec + relSec + 0.05;
 
     const env = v.envGain.gain;
     env.cancelScheduledValues(now);
     env.setValueAtTime(0, now);
     env.linearRampToValueAtTime(peak, now + attackSec);
-    // Exponential release is smoother than linear for tails
-    env.setTargetAtTime(0, now + attackSec, relSec / 4);
+    // Exponential decay from peak to near-zero
+    env.exponentialRampToValueAtTime(0.0001, now + attackSec + relSec);
+    env.setValueAtTime(0, now + attackSec + relSec);
 
     if (filterType !== 'none') {
       const filt = actx.createBiquadFilter();
@@ -147,6 +156,7 @@ const Audio = (() => {
     v.osc       = osc;
     v.active    = true;
     v.startTime = now;
+
     osc.onended = () => {
       if (v.osc === osc) {
         v.active = false;
@@ -162,9 +172,9 @@ const Audio = (() => {
     return currentScale[Math.max(0, Math.min(currentScale.length - 1, idx))];
   }
 
-  function setRoot(root)    { currentRoot    = root;    currentScale = buildScale(root, currentScaleId); }
-  function setScale(scaleId){ currentScaleId = scaleId; currentScale = buildScale(currentRoot, scaleId); }
-  function setMasterVol(v)  { if (masterGain) masterGain.gain.value = v; }
+  function setRoot(root)     { currentRoot    = root;    currentScale = buildScale(root, currentScaleId); }
+  function setScale(scaleId) { currentScaleId = scaleId; currentScale = buildScale(currentRoot, scaleId); }
+  function setMasterVol(v)   { if (masterGain) masterGain.gain.value = v; }
 
   return { init, resume, triggerNote, noteForY, setRoot, setScale, setMasterVol, SCALES, ROOTS };
 })();
