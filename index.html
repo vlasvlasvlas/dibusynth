@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>dibusynth</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <canvas id="canvas"></canvas>
+
+    <div id="panel">
+      <div class="panel-row" id="row-transport">
+        <button id="btn-play" aria-label="play">▶</button>
+        <button id="btn-pencil" class="tool-btn active" aria-label="pencil">✏</button>
+        <button id="btn-eraser" class="tool-btn" aria-label="eraser">◻</button>
+        <button id="btn-undo" aria-label="undo">↩</button>
+        <button id="btn-clear" aria-label="clear">✕</button>
+        <div class="bpm-control">
+          <button id="btn-bpm-down" aria-label="bpm down">−</button>
+          <span id="bpm-value">120</span>
+          <button id="btn-bpm-up" aria-label="bpm up">+</button>
+        </div>
+        <div class="vol-control">
+          <label for="slider-master-vol">vol</label>
+          <input type="range" id="slider-master-vol" min="0" max="1" step="0.01" value="0.7">
+        </div>
+      </div>
+
+      <div class="panel-row" id="row-colors">
+        <!-- populated by ui.js -->
+      </div>
+
+      <div class="panel-row" id="row-sweeps">
+        <!-- sweep items prepended by ui.js -->
+        <div class="sep"></div>
+        <select id="select-key" aria-label="key"></select>
+        <select id="select-scale" aria-label="scale"></select>
+        <div class="sep"></div>
+        <label class="quantize-label" title="Quantize to grid">
+          <input type="checkbox" id="chk-quantize" aria-label="quantize">
+          <span>grid</span>
+        </label>
+        <input type="range" id="slider-cell-size" min="10" max="80" step="5" value="30" title="Grid cell size" aria-label="cell size">
+        <div class="sep"></div>
+        <label class="grad-label" title="Background color 1">
+          <input type="color" id="color-bg1" value="#f0ebe0" aria-label="background color 1">
+        </label>
+        <label class="grad-label" title="Background color 2">
+          <input type="color" id="color-bg2" value="#ffffff" aria-label="background color 2">
+        </label>
+        <button id="btn-grad-dir" title="Gradient direction" aria-label="gradient direction">↕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timbre config popover -->
+  <div id="timbre-popover" class="hidden" role="dialog" aria-label="timbre config">
+    <div class="popover-inner">
+      <span class="popover-label">timbre</span>
+      <button class="wave-btn active" data-wave="sine">∿ sine</button>
+      <button class="wave-btn" data-wave="triangle">△ tri</button>
+      <button class="wave-btn" data-wave="square">⊓ sq</button>
+      <button class="wave-btn" data-wave="sawtooth">⊿ saw</button>
+      <button id="timbre-close" aria-label="close">✕</button>
+    </div>
+  </div>
+
+  <script src="canvas.js"></script>
+  <script src="audio.js"></script>
+  <script src="scanner.js"></script>
+  <script src="ui.js"></script>
+</body>
+</html>

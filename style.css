@@ -1,0 +1,208 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --panel-h: 152px;
+  --btn-size: 36px;
+  --panel-bg: #ffffff;
+  --panel-border: #ddd;
+  --body-bg: #e8e3da;
+  --text: #222;
+  --cell-size: 30px;
+  --bg1: #f0ebe0;
+  --bg2: #ffffff;
+  --grad-dir: to bottom;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  overflow: hidden;
+  height: 100dvh;
+  background: var(--body-bg);
+  color: var(--text);
+  overscroll-behavior: none;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+}
+
+#canvas {
+  flex: 1;
+  display: block;
+  touch-action: none;
+  cursor: crosshair;
+  background: linear-gradient(var(--grad-dir), var(--bg1), var(--bg2));
+  background-image:
+    linear-gradient(var(--grad-dir), var(--bg1), var(--bg2)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1' height='1'%3E%3C/svg%3E");
+}
+
+/* Grid overlay drawn via canvas.js when quantize is on */
+#canvas.quantize-on {
+  /* background-image is updated by JS to match cell size */
+}
+
+#panel {
+  flex-shrink: 0;
+  height: var(--panel-h);
+  background: var(--panel-bg);
+  border-top: 1px solid var(--panel-border);
+  padding: 5px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.panel-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-shrink: 0;
+  min-height: var(--btn-size);
+}
+.panel-row::-webkit-scrollbar { display: none; }
+
+/* Buttons */
+button {
+  border: 1.5px solid #ccc;
+  border-radius: 50%;
+  width: var(--btn-size);
+  height: var(--btn-size);
+  background: #fff;
+  cursor: pointer;
+  font-size: 15px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s, border-color 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+button.active { background: #222; color: #fff; border-color: #222; }
+button.sweep-on { background: #4a90d9; color: #fff; border-color: #4a90d9; }
+
+/* BPM */
+.bpm-control {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.bpm-control #bpm-value {
+  min-width: 34px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+.bpm-control button { width: 28px; height: 28px; font-size: 16px; }
+
+/* Vol */
+.vol-control {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  font-size: 11px;
+}
+input[type=range] { cursor: pointer; accent-color: #4a90d9; }
+.vol-control input[type=range] { width: 64px; }
+
+/* Color swatches */
+.color-swatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.1s;
+}
+.color-swatch.selected { border-color: #222; }
+
+/* Sweep items */
+.sweep-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.sweep-vol { width: 44px; display: none; }
+.sweep-item.on .sweep-vol { display: block; }
+
+/* Selects */
+select {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 4px 6px;
+  font-size: 12px;
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Quantize toggle */
+.quantize-label {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+#slider-cell-size { width: 56px; }
+
+/* Gradient color pickers */
+.grad-label {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+input[type=color] {
+  width: 28px;
+  height: 28px;
+  border: 1.5px solid #ccc;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 1px;
+  background: none;
+}
+#btn-grad-dir { width: 28px; height: 28px; font-size: 13px; border-radius: 8px; }
+
+/* Separator */
+.sep { width: 1px; height: 24px; background: #eee; flex-shrink: 0; }
+
+/* Timbre popover */
+#timbre-popover {
+  position: fixed;
+  bottom: calc(var(--panel-h) + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 14px;
+  padding: 10px 12px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+  z-index: 200;
+  white-space: nowrap;
+}
+#timbre-popover.hidden { display: none; }
+.popover-inner { display: flex; align-items: center; gap: 8px; }
+.popover-label { font-size: 11px; color: #888; }
+.wave-btn {
+  border-radius: 8px;
+  width: auto;
+  padding: 5px 10px;
+  font-size: 12px;
+}
+.wave-btn.active { background: #222; color: #fff; border-color: #222; }
+#timbre-close { width: 26px; height: 26px; font-size: 12px; }
