@@ -287,18 +287,30 @@ const Canvas = (() => {
   // ── Lookup grid ──────────────────────────────────────────────────────────
 
   function buildGrid() {
-    const newH = new Map(), newV = new Map();
+    // One entry per (color) per column/row — prevents same-color stacking
+    const hMap = new Map(); // cx → Map<color, y>
+    const vMap = new Map(); // cy → Map<color, x>
+
     strokes.forEach(stroke => {
       stroke.points.forEach(p => {
         const cx = Math.round(p.x), cy = Math.round(p.y);
-        if (!newH.has(cx)) newH.set(cx, []);
-        newH.get(cx).push({ y: p.y, color: stroke.color });
-        if (!newV.has(cy)) newV.set(cy, []);
-        newV.get(cy).push({ x: p.x, color: stroke.color });
+
+        if (!hMap.has(cx)) hMap.set(cx, new Map());
+        if (!hMap.get(cx).has(stroke.color)) hMap.get(cx).set(stroke.color, p.y);
+
+        if (!vMap.has(cy)) vMap.set(cy, new Map());
+        if (!vMap.get(cy).has(stroke.color)) vMap.get(cy).set(stroke.color, p.x);
       });
     });
-    hGrid = newH;
-    vGrid = newV;
+
+    hGrid = new Map();
+    hMap.forEach((colorMap, cx) => {
+      hGrid.set(cx, Array.from(colorMap, ([color, y]) => ({ y, color })));
+    });
+    vGrid = new Map();
+    vMap.forEach((colorMap, cy) => {
+      vGrid.set(cy, Array.from(colorMap, ([color, x]) => ({ x, color })));
+    });
   }
 
   // ── Quantize toggle (reversible) ─────────────────────────────────────────

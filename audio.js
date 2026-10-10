@@ -110,32 +110,34 @@ const Audio = (() => {
       gain       = 0.75
     } = cfg || {};
 
+    const actualFreq = freq * Math.pow(2, octave);
     const pool = ensurePool(color || '_default');
-    const now  = actx.currentTime;
-    const v    = getFreeVoice(pool);
 
-    // Steal gracefully if needed
+    // Skip: same frequency already active in this color's pool
+    if (pool.some(v => v.active && v.osc && Math.abs(v.osc.frequency.value - actualFreq) < 1)) return;
+
+    const now = actx.currentTime;
+    const v   = getFreeVoice(pool);
+
     if (v.active) releaseVoice(v);
     if (v.osc)    { try { v.osc.stop(); } catch (_) {} v.osc = null; }
     if (v.filter) { try { v.filter.disconnect(); } catch (_) {} v.filter = null; }
 
     const osc = actx.createOscillator();
     osc.type            = waveform;
-    osc.frequency.value = freq * Math.pow(2, octave);
+    osc.frequency.value = actualFreq;
     osc.detune.value    = detune;
 
-    const peak      = 0.40 * gain * (sweepVol !== undefined ? sweepVol : 0.6);
-    const attackSec = 0.018;
-    const relSec    = Math.max(0.08, release / 1000);
+    const peak      = 0.38 * gain * (sweepVol !== undefined ? sweepVol : 0.6);
+    const attackSec = 0.015;
+    const relSec    = Math.max(0.1, release / 1000);
     const duration  = attackSec + relSec + 0.05;
 
     const env = v.envGain.gain;
     env.cancelScheduledValues(now);
     env.setValueAtTime(0, now);
     env.linearRampToValueAtTime(peak, now + attackSec);
-    // Exponential decay from peak to near-zero
-    env.exponentialRampToValueAtTime(0.0001, now + attackSec + relSec);
-    env.setValueAtTime(0, now + attackSec + relSec);
+    env.linearRampToValueAtTime(0, now + attackSec + relSec);
 
     if (filterType !== 'none') {
       const filt = actx.createBiquadFilter();

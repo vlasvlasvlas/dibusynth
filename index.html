@@ -62,7 +62,9 @@
   <div id="timbre-popover" class="hidden" role="dialog" aria-label="timbre config">
     <div class="tp-header">
       <div id="tp-swatch"></div>
-      <span class="tp-title">síntesis</span>
+      <select id="tp-template" aria-label="template de síntesis">
+        <option value="">— síntesis —</option>
+      </select>
       <button id="timbre-close" aria-label="close">✕</button>
     </div>
 
@@ -111,6 +113,7 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4/dist/js-yaml.min.js"></script>
   <script src="canvas.js"></script>
   <script src="audio.js"></script>
   <script src="scanner.js"></script>

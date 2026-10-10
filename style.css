@@ -227,7 +227,17 @@ input[type=color] {
   border: 2px solid #ccc;
   flex-shrink: 0;
 }
-.tp-title { font-size: 11px; color: #999; flex: 1; font-weight: 600; letter-spacing: .04em; }
+#tp-template {
+  flex: 1;
+  font-size: 11px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 3px 6px;
+  background: #fafafa;
+  color: #555;
+  cursor: pointer;
+  min-width: 0;
+}
 #timbre-close { width: 26px; height: 26px; font-size: 12px; border-radius: 8px; }
 
 .tp-row {

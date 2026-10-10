@@ -4,10 +4,12 @@
   let bpm = 90;
   let gradDir = 'to bottom';
   let bg1 = '#f0ebe0', bg2 = '#ffffff';
+  let templates = {};
 
   function init() {
     buildColorRow();
     buildSweepRow();
+    loadTemplates();
     buildKeySelect();
     buildScaleSelect();
     bindTransport();
@@ -124,6 +126,69 @@
     swEl.classList.add('selected');
   }
 
+  // ── Templates (templates.yaml) ─────────────────────────────────────────────
+  async function loadTemplates() {
+    try {
+      const text = await fetch('templates.yaml').then(r => r.text());
+      const parsed = jsyaml.load(text);
+      templates = parsed.templates || {};
+      buildTemplateSelect();
+    } catch (e) {
+      console.warn('templates.yaml no disponible', e);
+    }
+  }
+
+  function buildTemplateSelect() {
+    const sel = $('tp-template');
+    const ORIG_PREFIX = 'orig_';
+    const origKeys = Object.keys(templates).filter(k => k.startsWith(ORIG_PREFIX));
+    const artistKeys = Object.keys(templates).filter(k => !k.startsWith(ORIG_PREFIX));
+
+    const grpOrig = document.createElement('optgroup');
+    grpOrig.label = 'originales';
+    origKeys.forEach(k => {
+      const o = document.createElement('option');
+      o.value = k; o.textContent = templates[k].label || k;
+      grpOrig.appendChild(o);
+    });
+
+    const grpArtist = document.createElement('optgroup');
+    grpArtist.label = 'inspiraciones';
+    artistKeys.forEach(k => {
+      const o = document.createElement('option');
+      o.value = k; o.textContent = templates[k].label || k;
+      grpArtist.appendChild(o);
+    });
+
+    sel.appendChild(grpOrig);
+    sel.appendChild(grpArtist);
+
+    sel.addEventListener('change', e => {
+      const key = e.target.value;
+      if (!key || !timbreTargetColor || !templates[key]) return;
+      const t = templates[key];
+      ['waveform','octave','detune','filterType','filterFreq','filterQ','release','gain']
+        .forEach(p => { if (t[p] !== undefined) Canvas.setColorParam(timbreTargetColor, p, t[p]); });
+      syncPopoverControls(timbreTargetColor);
+      previewTimbre();
+    });
+  }
+
+  function syncPopoverControls(color) {
+    const cfg = Canvas.getColorConfig()[color];
+    document.querySelectorAll('.wave-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.wave === cfg.waveform));
+    document.querySelectorAll('.oct-btn').forEach(b =>
+      b.classList.toggle('active', parseInt(b.dataset.oct, 10) === cfg.octave));
+    document.querySelectorAll('.filt-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.filt === cfg.filterType));
+    $('t-cutoff').value  = cfg.filterFreq ?? 2000;
+    $('t-q').value       = cfg.filterQ    ?? 1;
+    $('t-release').value = cfg.release    ?? 400;
+    $('t-detune').value  = cfg.detune     ?? 0;
+    $('t-gain').value    = cfg.gain       ?? 0.75;
+  }
+
   // ── Timbre popover ─────────────────────────────────────────────────────────
   function bindTimbrePopover() {
     $('timbre-close').addEventListener('click', closeTimbrePopover);
@@ -188,25 +253,9 @@
 
   function openTimbrePopover(color) {
     timbreTargetColor = color;
-    const cfg = Canvas.getColorConfig()[color];
-
-    // Swatch color
     $('tp-swatch').style.background = color;
-
-    // Sync all controls to current cfg
-    document.querySelectorAll('.wave-btn').forEach(b =>
-      b.classList.toggle('active', b.dataset.wave === cfg.waveform));
-    document.querySelectorAll('.oct-btn').forEach(b =>
-      b.classList.toggle('active', parseInt(b.dataset.oct, 10) === cfg.octave));
-    document.querySelectorAll('.filt-btn').forEach(b =>
-      b.classList.toggle('active', b.dataset.filt === cfg.filterType));
-
-    $('t-cutoff').value  = cfg.filterFreq ?? 2000;
-    $('t-q').value       = cfg.filterQ    ?? 1;
-    $('t-release').value = cfg.release    ?? 300;
-    $('t-detune').value  = cfg.detune     ?? 0;
-    $('t-gain').value    = cfg.gain       ?? 0.8;
-
+    $('tp-template').value = '';
+    syncPopoverControls(color);
     $('timbre-popover').classList.remove('hidden');
   }
 

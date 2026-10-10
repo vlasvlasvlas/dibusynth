@@ -6,8 +6,8 @@ const Scanner = (() => {
     tb:'rgba(0,150,80,0.30)', bt:'rgba(180,60,60,0.30)'
   };
 
-  // Minimum pixels between note triggers per sweep — prevents flooding voice pools
-  const MIN_TRIG_PX = 12;
+  // Minimum pixels between note triggers per sweep
+  const MIN_TRIG_PX = 20;
 
   const sweeps = {
     lr: { active:false, pos:0, vol:0.6, lastTrig:-MIN_TRIG_PX },

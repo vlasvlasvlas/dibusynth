@@ -1,0 +1,187 @@
+# dibusynth — templates de síntesis
+# Podés agregar los tuyos propios.
+# Parámetros: waveform (sine/triangle/square/sawtooth),
+#   octave (-2..2), detune (cents), filterType (none/lowpass/highpass/bandpass),
+#   filterFreq (Hz), filterQ (0.1..20), release (ms), gain (0..1)
+
+templates:
+
+  # ── Originales dibusynth (no borrar) ────────────────────────────────────────
+
+  orig_verde:
+    label: "verde original"
+    waveform: sine
+    octave: 0
+    detune: 0
+    filterType: lowpass
+    filterFreq: 3500
+    filterQ: 1
+    release: 600
+    gain: 0.75
+
+  orig_rojo:
+    label: "rojo original"
+    waveform: triangle
+    octave: -1
+    detune: 5
+    filterType: lowpass
+    filterFreq: 1800
+    filterQ: 1.5
+    release: 500
+    gain: 0.80
+
+  orig_violeta:
+    label: "violeta original"
+    waveform: triangle
+    octave: 1
+    detune: 0
+    filterType: lowpass
+    filterFreq: 5000
+    filterQ: 1
+    release: 350
+    gain: 0.70
+
+  orig_naranja:
+    label: "naranja original"
+    waveform: sine
+    octave: 0
+    detune: 7
+    filterType: lowpass
+    filterFreq: 4000
+    filterQ: 1
+    release: 400
+    gain: 0.72
+
+  orig_azul:
+    label: "azul original"
+    waveform: sine
+    octave: 0
+    detune: 0
+    filterType: lowpass
+    filterFreq: 6000
+    filterQ: 1
+    release: 900
+    gain: 0.60
+
+  orig_rosa:
+    label: "rosa original"
+    waveform: triangle
+    octave: 0
+    detune: 3
+    filterType: bandpass
+    filterFreq: 2200
+    filterQ: 2
+    release: 300
+    gain: 0.75
+
+  orig_celeste:
+    label: "celeste original"
+    waveform: sine
+    octave: 1
+    detune: 0
+    filterType: none
+    filterFreq: 8000
+    filterQ: 1
+    release: 700
+    gain: 0.60
+
+  orig_negro:
+    label: "negro original"
+    waveform: sine
+    octave: -1
+    detune: 0
+    filterType: lowpass
+    filterFreq: 800
+    filterQ: 1
+    release: 600
+    gain: 0.85
+
+  orig_dorado:
+    label: "dorado original"
+    waveform: triangle
+    octave: 0
+    detune: 4
+    filterType: lowpass
+    filterFreq: 3000
+    filterQ: 1.2
+    release: 450
+    gain: 0.72
+
+  # ── Inspiraciones ────────────────────────────────────────────────────────────
+
+  vangelis:
+    label: "Vangelis"
+    waveform: sine
+    octave: 0
+    detune: 8
+    filterType: lowpass
+    filterFreq: 2200
+    filterQ: 1.5
+    release: 1800
+    gain: 0.68
+
+  blade_runner:
+    label: "Blade Runner"
+    waveform: triangle
+    octave: -1
+    detune: 3
+    filterType: lowpass
+    filterFreq: 1100
+    filterQ: 2
+    release: 2200
+    gain: 0.62
+
+  laurie_spiegel:
+    label: "Laurie Spiegel"
+    waveform: sine
+    octave: 0
+    detune: 0
+    filterType: none
+    filterFreq: 8000
+    filterQ: 1
+    release: 800
+    gain: 0.68
+
+  kraftwerk:
+    label: "Kraftwerk"
+    waveform: square
+    octave: 0
+    detune: 0
+    filterType: lowpass
+    filterFreq: 2800
+    filterQ: 1
+    release: 160
+    gain: 0.76
+
+  daft_punk:
+    label: "Daft Punk"
+    waveform: sawtooth
+    octave: 0
+    detune: 6
+    filterType: lowpass
+    filterFreq: 1600
+    filterQ: 3.5
+    release: 360
+    gain: 0.76
+
+  brian_eno:
+    label: "Brian Eno"
+    waveform: sine
+    octave: 1
+    detune: 12
+    filterType: lowpass
+    filterFreq: 3800
+    filterQ: 1
+    release: 2800
+    gain: 0.50
+
+  gary_numan:
+    label: "Gary Numan"
+    waveform: sawtooth
+    octave: 0
+    detune: 15
+    filterType: highpass
+    filterFreq: 350
+    filterQ: 2
+    release: 130
+    gain: 0.80
