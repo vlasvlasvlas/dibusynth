@@ -89,7 +89,8 @@ const Audio = (() => {
     v.osc       = osc;
     v.active    = true;
     v.startTime = now;
-    osc.onended = () => { v.active = false; v.osc = null; };
+    // Guard by identity: stale onended from a stolen voice must not clear the new osc
+    osc.onended = () => { if (v.osc === osc) { v.active = false; v.osc = null; } };
   }
 
   function noteForY(y, canvasH) {

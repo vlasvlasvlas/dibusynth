@@ -35,17 +35,18 @@
       }
     });
 
-    btnPencil.addEventListener('click', () => {
-      Canvas.setTool('pencil');
-      btnPencil.classList.add('active');
-      btnEraser.classList.remove('active');
-    });
+    const allToolBtns = document.querySelectorAll('.tool-btn');
+    function selectTool(tool, btn) {
+      Canvas.setTool(tool);
+      allToolBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
 
-    btnEraser.addEventListener('click', () => {
-      Canvas.setTool('eraser');
-      btnEraser.classList.add('active');
-      btnPencil.classList.remove('active');
-    });
+    btnPencil.addEventListener('click', () => selectTool('pencil', btnPencil));
+    btnEraser.addEventListener('click', () => selectTool('eraser', btnEraser));
+    $('btn-line-solid').addEventListener('click',  e => selectTool('line-solid',  e.currentTarget));
+    $('btn-line-dashed').addEventListener('click', e => selectTool('line-dashed', e.currentTarget));
+    $('btn-circle').addEventListener('click',      e => selectTool('circle',      e.currentTarget));
 
     $('btn-undo').addEventListener('click', () => Canvas.undo());
     $('btn-clear').addEventListener('click', () => Canvas.clear());
