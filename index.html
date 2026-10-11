@@ -105,7 +105,7 @@
     <div class="popover-heading"><span id="tool-options-title">Opciones</span><button id="dash-close" aria-label="Cerrar opciones">✕</button></div>
     <label id="line-options">Tipo de línea<select id="line-kind"><option value="line-solid">Continua</option><option value="line-dashed">Punteada</option></select></label>
     <label id="create-options">Crear<select id="create-kind"><option value="circle">Círculo</option><option value="square">Cuadrado</option><option value="triangle">Triángulo</option><option value="star">Estrella</option><option value="text">Texto</option></select></label>
-    <label id="width-options">Grosor <input id="tool-width" type="range" min="1" max="24" step="1"></label>
+    <div id="width-options" class="slider-with-value"><span>Grosor</span><input id="tool-width" type="range" min="1" max="24" step="1"><output id="tool-width-val">12</output></div>
     <label id="erase-options">Tamaño del borrador <input id="eraser-size" type="range" min="4" max="100"></label>
     <div id="text-options"><label>Texto <input id="annotation-text" type="text" maxlength="200" placeholder="Escribí una anotación"></label><label>Tamaño <input id="text-size" type="range" min="12" max="72"></label><p>Tocá el canvas para colocarlo. Suena según su altura en el canvas.</p></div>
     <p id="paint-options">Elegí un color en la fila de abajo y después tocá un trazo para recolorearlo.</p>

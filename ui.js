@@ -87,7 +87,7 @@
     $('dash-close').addEventListener('click', () => hidePopover(true));
     lineKind.addEventListener('change', () => { Canvas.setTool(lineKind.value); refreshToolOptions(); });
     createKind.addEventListener('change', () => { Canvas.setTool(createKind.value); refreshToolOptions(); });
-    $('tool-width').addEventListener('input', e => Canvas.setWidth(Number(e.target.value)));
+    $('tool-width').addEventListener('input', e => { Canvas.setWidth(Number(e.target.value)); $('tool-width-val').value = e.target.value; });
     $('eraser-size').addEventListener('input', e => Canvas.setEraserRadius(Number(e.target.value)));
     $('annotation-text').addEventListener('input', e => Canvas.setAnnotation(e.target.value));
     $('text-size').addEventListener('input', e => Canvas.setTextSize(Number(e.target.value)));
@@ -341,7 +341,7 @@
     const visible = { 'line-options': line, 'create-options': create, 'width-options': tool === 'pencil' || line || (create && tool !== 'text'), 'erase-options': tool === 'eraser', 'text-options': tool === 'text', 'paint-options': tool === 'paint', 'dash-options': tool === 'line-dashed', 'visual-options-note': tool === 'pencil' || line || (create && tool !== 'text') };
     Object.entries(visible).forEach(([id, show]) => { $(id).hidden = !show; });
     $('tool-options-title').textContent = 'Opciones de ' + (line ? 'línea' : create ? 'crear' : tool === 'pencil' ? 'dibujo libre' : tool === 'paint' ? 'color / sonido' : 'borrado');
-    $('tool-width').value = Canvas.getWidth();
+    const w = Canvas.getWidth(); $('tool-width').value = w; $('tool-width-val').value = w;
     $('eraser-size').value = Canvas.getEraserRadius();
     $('annotation-text').value = Canvas.getAnnotation();
     $('text-size').value = Canvas.getTextSize();

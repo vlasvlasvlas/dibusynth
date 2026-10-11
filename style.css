@@ -63,6 +63,9 @@ input[type=color] { width: 30px; height: 30px; border: 1px solid #ccc; border-ra
 #dash-close, #timbre-close { width: 26px; height: 26px; font-size: 12px; }
 #dash-preview-svg { display: block; max-width: 100%; }
 .dash-slider-row { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; }
+.slider-with-value { display: flex; align-items: center; gap: 8px; }
+.slider-with-value input[type=range] { flex: 1; }
+.slider-with-value output { min-width: 2ch; text-align: right; font-size: 12px; font-weight: 600; color: #444; font-variant-numeric: tabular-nums; }
 .dash-hint { font-size: 11px; color: #666; flex-shrink: 0; }
 #slider-dash-gap { flex: 1 1 0; width: 0; min-width: 0; }
 #timbre-popover { width: 430px; }
