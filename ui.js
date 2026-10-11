@@ -43,6 +43,11 @@
         btnPlay.setAttribute('aria-label', 'Reproducir');
         btnPlay.classList.remove('active');
       } else {
+        // Si no hay ningún barrido activo, activar el lr (izq→der) automáticamente
+        if (!Scanner.SWEEP_IDS.some(id => Scanner.isSweepActive(id))) {
+          const lrBtn = document.querySelector('#row-sweeps .sweep-item button');
+          if (lrBtn) lrBtn.click();
+        }
         Scanner.play();
         btnPlay.textContent = '⏸';
         btnPlay.setAttribute('aria-label', 'Pausar');

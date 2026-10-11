@@ -165,5 +165,7 @@ const Scanner = (() => {
   function setSweepVol(id, vol) { sweeps[id].vol = vol; }
   function setMutedColors(set) { mutedColors = set; }
 
-  return { init, play, stop, isPlaying, setBPM, toggleSweep, setSweepVol, setMutedColors, SWEEP_IDS, SWEEP_LABELS };
+  function isSweepActive(id) { return sweeps[id]?.active ?? false; }
+
+  return { init, play, stop, isPlaying, setBPM, toggleSweep, setSweepVol, setMutedColors, isSweepActive, SWEEP_IDS, SWEEP_LABELS };
 })();
