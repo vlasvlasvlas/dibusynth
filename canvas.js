@@ -27,6 +27,8 @@ const Canvas = (() => {
   let strokes = [];
   let currentStroke = null;
   let shapeStart    = null;
+  let movingStroke  = null;
+  let moveOrigin    = null;
   let shapePreview  = null;
   let activeTool    = 'pencil';
   let currentColor  = COLORS[0];
@@ -165,7 +167,10 @@ const Canvas = (() => {
     e.preventDefault();
     el.setPointerCapture(e.pointerId);
     const raw = getPos(e);
-    if (activeTool === 'paint') {
+    if (activeTool === 'move') {
+      const target = [...strokes].reverse().find(s => hit(s, raw, 14));
+      if (target) { remember(); movingStroke = target; moveOrigin = raw; }
+    } else if (activeTool === 'paint') {
       const target = [...strokes].reverse().find(s => hit(s, raw, 12));
       if (target && target.color !== currentColor) { remember(); target.color = currentColor; buildGrid(); redraw(); }
     } else if (activeTool === 'text') {
@@ -206,6 +211,16 @@ const Canvas = (() => {
       ctx.moveTo(pts[pts.length - 2].x, pts[pts.length - 2].y);
       ctx.lineTo(p.x, p.y);
       ctx.stroke();
+    } else if (activeTool === 'move' && movingStroke) {
+      const dx = raw.x - moveOrigin.x, dy = raw.y - moveOrigin.y;
+      moveOrigin = raw;
+      const shift = p => ({ x: p.x + dx, y: p.y + dy });
+      movingStroke.rawPoints = movingStroke.rawPoints.map(shift);
+      movingStroke.points    = movingStroke.rawPoints;
+      if (movingStroke.cx !== undefined) { movingStroke.cx += dx; movingStroke.cy += dy; }
+      if (movingStroke.p1) { movingStroke.p1 = shift(movingStroke.p1); movingStroke.p2 = shift(movingStroke.p2); }
+      if (movingStroke.x !== undefined) { movingStroke.x += dx; movingStroke.y += dy; }
+      buildGrid(); redraw();
     } else if (activeTool === 'eraser') {
       eraseAt(raw);
     } else if (shapePreview) {
@@ -215,6 +230,9 @@ const Canvas = (() => {
   }
 
   function onUp() {
+    if (activeTool === 'move') {
+      movingStroke = null; moveOrigin = null; return;
+    }
     if (activeTool === 'pencil' && currentStroke && currentStroke.rawPoints.length > 0) {
       remember();
       strokes.push(currentStroke);

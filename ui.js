@@ -67,7 +67,7 @@
     const bindings = [
       [btnPencil, () => 'pencil'], [btnEraser, () => 'eraser'],
       [$('btn-line-solid'), () => lineKind.value], [$('btn-circle'), () => createKind.value],
-      [$('btn-paint'), () => 'paint']
+      [$('btn-move'), () => 'move'], [$('btn-paint'), () => 'paint']
     ];
     bindings.forEach(([btn, tool]) => {
       let held = false, timer, origin;
@@ -551,7 +551,7 @@
     $('color-bg1').value = settings.background.first;
     $('color-bg2').value = settings.background.second;
     $('btn-grad-dir').textContent = gradDir === 'to bottom' ? '↕' : '↔';
-    const tools = { pencil: 'btn-pencil', 'line-solid': 'btn-line-solid', 'line-dashed': 'btn-line-solid', square: 'btn-circle', triangle: 'btn-circle', star: 'btn-circle', text: 'btn-circle', paint: 'btn-paint', circle: 'btn-circle', eraser: 'btn-eraser' };
+    const tools = { pencil: 'btn-pencil', 'line-solid': 'btn-line-solid', 'line-dashed': 'btn-line-solid', square: 'btn-circle', triangle: 'btn-circle', star: 'btn-circle', text: 'btn-circle', paint: 'btn-paint', move: 'btn-move', circle: 'btn-circle', eraser: 'btn-eraser' };
     document.querySelectorAll('.tool-btn').forEach(button => {
       const active = button.id === tools[settings.drawing.tool];
       button.classList.toggle('active', active);
