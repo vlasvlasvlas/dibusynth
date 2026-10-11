@@ -107,7 +107,8 @@
     });
 
     $('slider-master-vol').addEventListener('input', e => {
-      Audio.setMasterVol(parseFloat(e.target.value));
+      const v = parseFloat(e.target.value);
+      Audio.setMasterVol(v * v);
     });
   }
 
@@ -540,7 +541,7 @@
 
   function applyInitialControls() {
     $('bpm-value').textContent = settings.music.bpm;
-    $('slider-master-vol').value = settings.music.masterVolume;
+    $('slider-master-vol').value = Math.sqrt(settings.music.masterVolume);
     $('select-key').value = settings.music.root;
     $('select-scale').value = settings.music.scale;
     $('chk-quantize').checked = settings.drawing.quantize;
