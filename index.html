@@ -74,8 +74,15 @@
 
   <!-- Dash gap popover -->
   <div id="dash-popover" class="hidden" role="dialog" aria-label="espaciado del punteado">
-    <span class="dash-preview" id="dash-preview">╌╌╌</span>
-    <input type="range" id="slider-dash-gap" min="2" max="50" step="1" value="7" aria-label="gap del punteado">
+    <span class="dash-pop-label">espacio entre guiones</span>
+    <svg id="dash-preview-svg" width="140" height="12" aria-hidden="true">
+      <line x1="2" y1="6" x2="138" y2="6" stroke="#444" stroke-width="2.5" stroke-dasharray="10 7" stroke-linecap="round"/>
+    </svg>
+    <div class="dash-slider-row">
+      <span class="dash-hint">menos</span>
+      <input type="range" id="slider-dash-gap" min="2" max="50" step="1" value="7" aria-label="gap del punteado">
+      <span class="dash-hint">más</span>
+    </div>
   </div>
 
   <!-- Timbre config popover -->

@@ -227,19 +227,32 @@ input[type=color] {
   box-shadow: 0 6px 24px rgba(0,0,0,0.18);
   z-index: 200;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  width: 180px;
 }
 #dash-popover.hidden { display: none; }
-.dash-preview {
-  font-size: 14px;
-  letter-spacing: 2px;
-  color: #555;
-  white-space: nowrap;
-  min-width: 36px;
+.dash-pop-label {
+  font-size: 10px;
+  color: #aaa;
   text-align: center;
+  white-space: nowrap;
 }
-#slider-dash-gap { width: 100px; }
+#dash-preview-svg { display: block; }
+.dash-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+.dash-hint {
+  font-size: 9px;
+  color: #bbb;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+#slider-dash-gap { flex: 1; }
 
 /* Timbre popover */
 #timbre-popover {

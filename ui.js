@@ -323,9 +323,9 @@
   }
 
   function updateDashPreview(gap) {
-    // Visual hint: fewer dashes = more spaced
-    const count = Math.max(1, Math.round(12 / (gap / 5 + 1)));
-    $('dash-preview').textContent = ('╌ ').repeat(count).trim();
+    const dash = Math.max(4, gap * 1.4);
+    const line = document.querySelector('#dash-preview-svg line');
+    if (line) line.setAttribute('stroke-dasharray', `${dash.toFixed(1)} ${gap}`);
   }
 
   function closeDashPopover(e) {
