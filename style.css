@@ -176,6 +176,15 @@ select {
   white-space: nowrap;
 }
 #slider-cell-size { width: 56px; }
+#inp-measures {
+  width: 36px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 2px 4px;
+  font-size: 12px;
+  text-align: center;
+  flex-shrink: 0;
+}
 
 /* Gradient color pickers */
 .grad-label {

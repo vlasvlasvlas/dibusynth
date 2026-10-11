@@ -16,6 +16,7 @@
     bindTimbrePopover();
     bindBackground();
     bindQuantize();
+    bindMeasures();
   }
 
   // ── Transport ──────────────────────────────────────────────────────────────
@@ -363,12 +364,26 @@
       const on   = chk.checked;
       const cell = parseInt(size.value, 10);
       Canvas.setQuantize(on, cell);
-      // Update CSS grid size for visual reference
       document.documentElement.style.setProperty('--cell-size', cell + 'px');
     }
 
     chk.addEventListener('change', update);
     size.addEventListener('input',  update);
+  }
+
+  // ── Measures grid ──────────────────────────────────────────────────────────
+  function bindMeasures() {
+    const chk   = $('chk-measures');
+    const count = $('inp-measures');
+    const beats = $('sel-beats');
+
+    function update() {
+      Canvas.setMeasures(chk.checked, parseInt(count.value, 10), parseInt(beats.value, 10));
+    }
+
+    chk.addEventListener('change', update);
+    count.addEventListener('input',  update);
+    beats.addEventListener('change', update);
   }
 
   // ── Helper ─────────────────────────────────────────────────────────────────

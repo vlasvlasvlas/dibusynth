@@ -47,6 +47,19 @@
         </label>
         <input type="range" id="slider-cell-size" min="10" max="80" step="5" value="25" title="Grid cell size" aria-label="cell size">
         <div class="sep"></div>
+        <label class="quantize-label" title="Grilla de compases">
+          <input type="checkbox" id="chk-measures" aria-label="compases">
+          <span>comp</span>
+        </label>
+        <input type="number" id="inp-measures" min="1" max="32" value="4" title="Número de compases" aria-label="compases">
+        <select id="sel-beats" aria-label="tiempos por compás" title="Tiempos por compás">
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4" selected>4</option>
+          <option value="6">6</option>
+          <option value="8">8</option>
+        </select>
+        <div class="sep"></div>
         <label class="grad-label" title="Background color 1">
           <input type="color" id="color-bg1" value="#f0ebe0" aria-label="background color 1">
         </label>

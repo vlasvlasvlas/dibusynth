@@ -21,13 +21,16 @@ const Canvas = (() => {
 
   let el, ctx;
   let strokes = [];
-  let currentStroke = null;   // in-progress freehand stroke
-  let shapeStart    = null;   // start point for line/circle tools
-  let shapePreview  = null;   // { type, color, p1, p2 } drawn each frame
+  let currentStroke = null;
+  let shapeStart    = null;
+  let shapePreview  = null;
   let activeTool    = 'pencil';
   let currentColor  = COLORS[0];
   let quantize      = false;
   let cellSize      = 25;
+  let measuresOn    = false;
+  let measureCount  = 4;
+  let beatsPerMeasure = 4;
   let hGrid         = new Map();
   let vGrid         = new Map();
   const colorConfig = {};
@@ -38,6 +41,8 @@ const Canvas = (() => {
     COLORS.forEach(c => { colorConfig[c] = { ...COLOR_PRESETS[c] }; });
     resize();
     bindEvents();
+    // Re-sync backing store whenever the canvas CSS size changes (panel height changes, etc.)
+    new ResizeObserver(() => resize()).observe(el);
   }
 
   function resize() {
@@ -199,6 +204,23 @@ const Canvas = (() => {
   function redraw() {
     const w = el.offsetWidth, h = el.offsetHeight;
     ctx.clearRect(0, 0, w, h);
+
+    // Measure / beat grid (vertical subdivisions)
+    if (measuresOn && measureCount > 0 && beatsPerMeasure > 0) {
+      const totalBeats = measureCount * beatsPerMeasure;
+      const beatW = w / totalBeats;
+      ctx.save();
+      for (let i = 1; i < totalBeats; i++) {
+        const x = i * beatW;
+        const isMeasure = i % beatsPerMeasure === 0;
+        ctx.strokeStyle = isMeasure ? 'rgba(60,60,60,0.40)' : 'rgba(60,60,60,0.15)';
+        ctx.lineWidth   = isMeasure ? 1 : 0.5;
+        ctx.setLineDash(isMeasure ? [] : [3, 5]);
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+      }
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
 
     // Octave boundary lines — always visible, mark where the same notes repeat
     const octaveYs = Audio.getOctaveBoundaryYs(h);
@@ -404,10 +426,16 @@ const Canvas = (() => {
   function getColorConfig() { return colorConfig; }
   function setColorWaveform(color, waveform) { colorConfig[color].waveform = waveform; }
   function setColorParam(color, param, value) { colorConfig[color][param] = value; }
+  function setMeasures(on, count, beats) {
+    measuresOn      = on;
+    if (count !== undefined) measureCount    = Math.max(1, count);
+    if (beats !== undefined) beatsPerMeasure = Math.max(1, beats);
+    redraw();
+  }
 
   return {
     init, resize, redraw, undo, clear,
-    setTool, setColor, setQuantize, setCellSize,
+    setTool, setColor, setQuantize, setCellSize, setMeasures,
     getHGrid, getVGrid, getSize, getCtx, getColorConfig, setColorWaveform, setColorParam,
     COLORS
   };
