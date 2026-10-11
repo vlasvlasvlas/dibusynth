@@ -169,7 +169,7 @@ const Canvas = (() => {
       const target = [...strokes].reverse().find(s => hit(s, raw, 12));
       if (target && target.color !== currentColor) { remember(); target.color = currentColor; buildGrid(); redraw(); }
     } else if (activeTool === 'text') {
-      if (annotation.trim()) { remember(); strokes.push({type:'text',text:annotation.trim(),textSize,color:currentColor,x:raw.x,y:raw.y,rawPoints:[],points:[]}); redraw(); }
+      if (annotation.trim()) { remember(); strokes.push({type:'text',text:annotation.trim(),textSize,color:currentColor,x:raw.x,y:raw.y,rawPoints:[{x:raw.x,y:raw.y}],points:[{x:raw.x,y:raw.y}]}); buildGrid(); redraw(); }
     } else if (activeTool === 'pencil') {
       const p = snapPos(raw);
       currentStroke = {
