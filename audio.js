@@ -47,7 +47,7 @@ const Audio = (() => {
     comp.knee.value = 16;
     comp.ratio.value = 4;
     comp.attack.value = 0.010;
-    comp.release.value = 0.4;
+    comp.release.value = 0.7;
     masterGain = actx.createGain();
     masterGain.gain.value = settings.masterVolume ?? 0.65;
     masterGain.connect(comp);
