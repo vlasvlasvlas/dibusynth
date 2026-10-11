@@ -36,7 +36,7 @@ drawing:
 
 background:
   randomize: true # Elegir dos colores de la paleta en cada recarga.
-  tint: 0.05 # 5 % de color y 95 % de blanco.
+  tint: 0.18 # 5 % de color y 95 % de blanco.
   # Colores fijos cuando randomize es false.
   first: "#f0ebe0"
   second: "#ffffff"

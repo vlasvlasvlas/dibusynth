@@ -5,7 +5,7 @@ const AppConfig = (() => {
     music: { bpm: 80, bpmStep: 5, masterVolume: 0.65, root: 'C', scale: 'major', octaves: 4, baseOctave: 3, beatsPerSweep: 4 },
     sweeps: Object.fromEntries(['lr', 'rl', 'tb', 'bt'].map(id => [id, { active: false, volume: 0.6 }])),
     drawing: { tool: 'pencil', selectedColor: colors[0], pencilWidth: 12, shapeWidth: 3, eraserRadius: 24, dashGap: 7, quantize: false, cellSize: 25, guides: false, divisions: 4, octaveGuides: true, text: '', textSize: 24 },
-    background: { randomize: true, tint: 0.05, first: '#f0ebe0', second: '#ffffff', direction: 'to bottom' },
+    background: { randomize: true, tint: 0.18, first: '#f0ebe0', second: '#ffffff', direction: 'to bottom' },
     palette: colors.map((color, i) => ({ color, label: names[i], preset: 'orig_' + names[i].toLowerCase(), muted: false, sound: {} }))
   };
   const soundDefaults = { waveform: 'sine', octave: 0, detune: 0, filterType: 'none', filterFreq: 2000, filterQ: 1, release: 400, gain: 0.75 };
