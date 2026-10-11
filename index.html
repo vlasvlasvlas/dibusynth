@@ -47,21 +47,18 @@
         </label>
         <input type="range" id="slider-cell-size" min="10" max="80" step="5" value="25" title="Grid cell size" aria-label="cell size">
         <div class="sep"></div>
-        <label class="quantize-label" title="Grilla de compases">
-          <input type="checkbox" id="chk-measures" aria-label="compases">
-          <span>comp</span>
+        <label class="quantize-label" title="Grilla de divisiones verticales">
+          <input type="checkbox" id="chk-measures" aria-label="divisiones">
+          <span>div</span>
         </label>
-        <div class="bpm-control">
-          <button id="btn-measures-down" aria-label="menos compases">−</button>
-          <span id="measures-value">4</span>
-          <button id="btn-measures-up" aria-label="más compases">+</button>
-        </div>
-        <select id="sel-beats" aria-label="tiempos por compás" title="Tiempos por compás">
-          <option value="2">2/4</option>
-          <option value="3">3/4</option>
-          <option value="4" selected>4/4</option>
-          <option value="6">6/8</option>
-          <option value="8">8/8</option>
+        <select id="sel-beats" aria-label="divisiones verticales" title="Divisiones verticales">
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4" selected>4</option>
+          <option value="6">6</option>
+          <option value="8">8</option>
+          <option value="12">12</option>
+          <option value="16">16</option>
         </select>
         <div class="sep"></div>
         <label class="grad-label" title="Background color 1">

@@ -374,25 +374,10 @@
   // ── Measures grid ──────────────────────────────────────────────────────────
   function bindMeasures() {
     const chk   = $('chk-measures');
-    const val   = $('measures-value');
     const beats = $('sel-beats');
-    let measures = 4;
-
     function update() {
-      Canvas.setMeasures(chk.checked, measures, parseInt(beats.value, 10));
+      Canvas.setMeasures(chk.checked, 1, parseInt(beats.value, 10));
     }
-
-    $('btn-measures-down').addEventListener('click', () => {
-      measures = Math.max(1, measures - 1);
-      val.textContent = measures;
-      update();
-    });
-    $('btn-measures-up').addEventListener('click', () => {
-      measures = Math.min(32, measures + 1);
-      val.textContent = measures;
-      update();
-    });
-
     chk.addEventListener('change', update);
     beats.addEventListener('change', update);
   }

@@ -205,20 +205,16 @@ const Canvas = (() => {
     const w = el.offsetWidth, h = el.offsetHeight;
     ctx.clearRect(0, 0, w, h);
 
-    // Measure / beat grid (vertical subdivisions)
-    if (measuresOn && measureCount > 0 && beatsPerMeasure > 0) {
-      const totalBeats = measureCount * beatsPerMeasure;
-      const beatW = w / totalBeats;
+    // Vertical division grid
+    if (measuresOn && beatsPerMeasure > 1) {
+      const divW = w / beatsPerMeasure;
       ctx.save();
-      for (let i = 1; i < totalBeats; i++) {
-        const x = i * beatW;
-        const isMeasure = i % beatsPerMeasure === 0;
-        ctx.strokeStyle = isMeasure ? 'rgba(60,60,60,0.40)' : 'rgba(60,60,60,0.15)';
-        ctx.lineWidth   = isMeasure ? 1 : 0.5;
-        ctx.setLineDash(isMeasure ? [] : [3, 5]);
+      ctx.strokeStyle = 'rgba(60,60,60,0.35)';
+      ctx.lineWidth   = 1;
+      for (let i = 1; i < beatsPerMeasure; i++) {
+        const x = i * divW;
         ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
       }
-      ctx.setLineDash([]);
       ctx.restore();
     }
 
