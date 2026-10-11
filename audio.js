@@ -12,7 +12,8 @@ const Audio = (() => {
     C:60,'C#':61,D:62,'D#':63,E:64,F:65,'F#':66,G:67,'G#':68,A:69,'A#':70,B:71
   };
 
-  const OCTAVES = 4;
+  let OCTAVES = 4;
+  let baseOctave = 3;
   const ATTACK = 0.015;
   const FADE = 0.015;
   const MAX_VOICES = 128;
@@ -27,7 +28,7 @@ const Audio = (() => {
   function midiToHz(m) { return 440 * Math.pow(2, (m - 69) / 12); }
 
   function buildScale(root, scaleId) {
-    const rootMidi = ROOT_MIDI[root] - 12;
+    const rootMidi = ROOT_MIDI[root] + (baseOctave - 4) * 12;
     const notes = [];
     for (let o = 0; o < OCTAVES; o++) {
       SCALES[scaleId].intervals.forEach(i => notes.push(midiToHz(rootMidi + o * 12 + i)));
@@ -35,7 +36,11 @@ const Audio = (() => {
     return notes.sort((a, b) => b - a);
   }
 
-  function init() {
+  function init(settings = {}) {
+    OCTAVES = settings.octaves ?? 4;
+    baseOctave = settings.baseOctave ?? 3;
+    currentRoot = settings.root ?? 'C';
+    currentScaleId = settings.scale ?? 'major';
     actx = new (window.AudioContext || window.webkitAudioContext)();
     const comp = actx.createDynamicsCompressor();
     comp.threshold.value = -24;
@@ -44,7 +49,7 @@ const Audio = (() => {
     comp.attack.value = 0.010;
     comp.release.value = 0.4;
     masterGain = actx.createGain();
-    masterGain.gain.value = 0.65;
+    masterGain.gain.value = settings.masterVolume ?? 0.65;
     masterGain.connect(comp);
     comp.connect(actx.destination);
     currentScale = buildScale(currentRoot, currentScaleId);

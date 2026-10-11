@@ -1,5 +1,7 @@
 # dibusynth — templates de síntesis
-# Podés agregar los tuyos propios.
+# Podés agregar los tuyos propios dentro del bloque templates existente.
+# config.yaml asigna estos presets a colores y define el resto de los ajustes.
+# Guía y rangos completos: README.md.
 # Parámetros: waveform (sine/triangle/square/sawtooth),
 #   octave (-2..2), detune (cents), filterType (none/lowpass/highpass/bandpass),
 #   filterFreq (Hz), filterQ (0.1..20), release (ms), gain (0..1)
@@ -108,6 +110,17 @@ templates:
     gain: 0.72
 
   # ── Inspiraciones ────────────────────────────────────────────────────────────
+
+  chiptune:
+    label: "Chiptune · 8-bit"
+    waveform: square
+    octave: 0
+    detune: 0
+    filterType: none
+    filterFreq: 8000
+    filterQ: 1
+    release: 80
+    gain: 0.45
 
   vangelis:
     label: "Vangelis"

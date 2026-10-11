@@ -9,7 +9,7 @@ const Scanner = (() => {
   const sweeps = Object.fromEntries(SWEEP_IDS.map(id => [id, {
     active: false, phase: 0, pos: 0, vol: 0.6, lastDot: -Infinity
   }]));
-  const BEATS_PER_SWEEP = 4;
+  let BEATS_PER_SWEEP = 4;
   const LOOKAHEAD = 0.050;
   let bpm = 90;
   let playing = false;
@@ -119,7 +119,16 @@ const Scanner = (() => {
     ctx.restore();
   }
 
-  function init() { rafId = requestAnimationFrame(tick); }
+  function init(settings = {}) {
+    bpm = settings.music?.bpm ?? 90;
+    BEATS_PER_SWEEP = settings.music?.beatsPerSweep ?? 4;
+    for (const id of SWEEP_IDS) {
+      sweeps[id].active = settings.sweeps?.[id]?.active ?? false;
+      sweeps[id].vol = settings.sweeps?.[id]?.volume ?? 0.6;
+    }
+    mutedColors = new Set((settings.palette || []).filter(p => p.muted).map(p => p.color));
+    rafId = requestAnimationFrame(tick);
+  }
   function play() {
     if (playing) return;
     Audio.resume();

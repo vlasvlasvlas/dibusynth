@@ -1,16 +1,21 @@
 (function UI() {
   let timbreTargetColor = null;
+  let selectedColor = null;
+  let activePopover = null;
+  let popoverAnchor = null;
+  let returnFocus = null;
   let longPressTimer    = null;
   const mutedColors     = new Set();
   let bpm = 90;
   let gradDir = 'to bottom';
   let bg1 = '#f0ebe0', bg2 = '#ffffff';
   let templates = {};
+  let settings;
 
   function init() {
     buildColorRow();
     buildSweepRow();
-    loadTemplates();
+    buildTemplateSelect();
     buildKeySelect();
     buildScaleSelect();
     bindTransport();
@@ -18,6 +23,10 @@
     bindBackground();
     bindQuantize();
     bindMeasures();
+    bindPopovers();
+    selectedColor = settings.drawing.selectedColor;
+    applyInitialControls();
+    $('btn-edit-color').addEventListener('click', () => openTimbrePopover(selectedColor));
   }
 
   // ── Transport ──────────────────────────────────────────────────────────────
@@ -31,45 +40,63 @@
       if (Scanner.isPlaying()) {
         Scanner.stop();
         btnPlay.textContent = '▶';
+        btnPlay.setAttribute('aria-label', 'Reproducir');
         btnPlay.classList.remove('active');
       } else {
         Scanner.play();
         btnPlay.textContent = '⏸';
+        btnPlay.setAttribute('aria-label', 'Pausar');
         btnPlay.classList.add('active');
       }
     });
 
     const allToolBtns = document.querySelectorAll('.tool-btn');
+    const lineKind = $('line-kind'), createKind = $('create-kind');
+    if (settings.drawing.tool.startsWith('line-')) lineKind.value = settings.drawing.tool;
+    if (['circle','square','triangle','star','text'].includes(settings.drawing.tool)) createKind.value = settings.drawing.tool;
     function selectTool(tool, btn) {
       Canvas.setTool(tool);
-      allToolBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+      allToolBtns.forEach(b => { b.classList.toggle('active', b === btn); b.setAttribute('aria-pressed', String(b === btn)); });
+      hidePopover();
     }
-
-    btnPencil.addEventListener('click', () => selectTool('pencil', btnPencil));
-    btnEraser.addEventListener('click', () => selectTool('eraser', btnEraser));
-    $('btn-line-solid').addEventListener('click',  e => selectTool('line-solid',  e.currentTarget));
-    $('btn-circle').addEventListener('click',      e => selectTool('circle',      e.currentTarget));
-
-    const btnDashed = $('btn-line-dashed');
-    btnDashed.addEventListener('click',       e => selectTool('line-dashed', e.currentTarget));
-    btnDashed.addEventListener('contextmenu', e => { e.preventDefault(); openDashPopover(e); });
-    btnDashed.addEventListener('pointerdown', e => {
-      longPressTimer = setTimeout(() => { longPressTimer = null; openDashPopover(e); }, 480);
+    const bindings = [
+      [btnPencil, () => 'pencil'], [btnEraser, () => 'eraser'],
+      [$('btn-line-solid'), () => lineKind.value], [$('btn-circle'), () => createKind.value],
+      [$('btn-paint'), () => 'paint']
+    ];
+    bindings.forEach(([btn, tool]) => {
+      let held = false, timer, origin;
+      btn.addEventListener('click', e => { if (held) { held = false; e.preventDefault(); return; } selectTool(tool(), btn); });
+      const cancel = () => clearTimeout(timer);
+      btn.addEventListener('pointerdown', e => {
+        if (e.pointerType === 'mouse') return;
+        held = false; origin = {x:e.clientX,y:e.clientY};
+        timer = setTimeout(() => { held = true; selectTool(tool(), btn); openDashPopover(); }, 480);
+      });
+      btn.addEventListener('pointermove', e => { if (origin && Math.hypot(e.clientX-origin.x,e.clientY-origin.y)>8) cancel(); });
+      btn.addEventListener('pointerup', cancel);
+      btn.addEventListener('pointercancel', cancel);
+      btn.addEventListener('contextmenu', e => { e.preventDefault(); selectTool(tool(), btn); openDashPopover(); });
     });
-    btnDashed.addEventListener('pointerup',   () => { clearTimeout(longPressTimer); longPressTimer = null; });
-    btnDashed.addEventListener('pointercancel', () => { clearTimeout(longPressTimer); longPressTimer = null; });
+    $('btn-dash-settings').addEventListener('click', openDashPopover);
+    $('dash-close').addEventListener('click', () => hidePopover(true));
+    lineKind.addEventListener('change', () => { Canvas.setTool(lineKind.value); refreshToolOptions(); });
+    createKind.addEventListener('change', () => { Canvas.setTool(createKind.value); refreshToolOptions(); });
+    $('tool-width').addEventListener('input', e => Canvas.setWidth(Number(e.target.value)));
+    $('eraser-size').addEventListener('input', e => Canvas.setEraserRadius(Number(e.target.value)));
+    $('annotation-text').addEventListener('input', e => Canvas.setAnnotation(e.target.value));
+    $('text-size').addEventListener('input', e => Canvas.setTextSize(Number(e.target.value)));
 
     $('btn-undo').addEventListener('click', () => Canvas.undo());
     $('btn-clear').addEventListener('click', () => Canvas.clear());
 
     $('btn-bpm-down').addEventListener('click', () => {
-      bpm = Math.max(20, bpm - 5);
+      bpm = Math.max(20, bpm - settings.music.bpmStep);
       bpmVal.textContent = bpm;
       Scanner.setBPM(bpm);
     });
     $('btn-bpm-up').addEventListener('click', () => {
-      bpm = Math.min(300, bpm + 5);
+      bpm = Math.min(300, bpm + settings.music.bpmStep);
       bpmVal.textContent = bpm;
       Scanner.setBPM(bpm);
     });
@@ -87,25 +114,23 @@
       wrap.className = 'swatch-wrap';
 
       const sw = document.createElement('div');
-      sw.className = 'color-swatch' + (i === 0 ? ' selected' : '');
+      const instrument = settings.palette.find(p => p.color === color);
+      sw.className = 'color-swatch' + (color === settings.drawing.selectedColor ? ' selected' : '');
       sw.style.background = color;
       sw.setAttribute('role', 'button');
-      sw.setAttribute('aria-label', 'color ' + color);
+      sw.setAttribute('aria-label', instrument.label);
+      sw.title = instrument.label;
+      sw.setAttribute('aria-pressed', String(color === settings.drawing.selectedColor));
       sw.tabIndex = 0;
-
-      const editBtn = document.createElement('button');
-      editBtn.className  = 'swatch-edit';
-      editBtn.textContent = '⚙';
-      editBtn.setAttribute('aria-label', 'editar timbre ' + color);
-      editBtn.addEventListener('click', e => {
-        e.stopPropagation();
-        openTimbrePopover(color);
-      });
 
       const muteBtn = document.createElement('button');
       muteBtn.className = 'swatch-mute';
       muteBtn.textContent = 'M';
-      muteBtn.setAttribute('aria-label', 'mutear ' + color);
+      muteBtn.title = 'Silenciar este instrumento';
+      muteBtn.setAttribute('aria-pressed', 'false');
+      muteBtn.setAttribute('aria-label', 'Silenciar ' + instrument.label);
+      muteBtn.classList.toggle('muted', mutedColors.has(color));
+      muteBtn.setAttribute('aria-pressed', String(mutedColors.has(color)));
       muteBtn.addEventListener('click', e => {
         e.stopPropagation();
         if (mutedColors.has(color)) {
@@ -115,6 +140,7 @@
           mutedColors.add(color);
           muteBtn.classList.add('muted');
         }
+        muteBtn.setAttribute('aria-pressed', String(mutedColors.has(color)));
         Scanner.setMutedColors(new Set(mutedColors));
       });
 
@@ -138,32 +164,23 @@
         e.preventDefault(); openTimbrePopover(color);
       });
       sw.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' ') selectColor(color, sw);
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectColor(color, sw); }
       });
 
-      wrap.append(sw, editBtn, muteBtn);
+      wrap.append(sw, muteBtn);
       row.appendChild(wrap);
     });
   }
 
   function selectColor(color, swEl) {
+    selectedColor = color;
     Canvas.setColor(color);
-    document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+    document.querySelectorAll('.color-swatch').forEach(s => { s.classList.remove('selected'); s.setAttribute('aria-pressed', 'false'); });
     swEl.classList.add('selected');
+    swEl.setAttribute('aria-pressed', 'true');
   }
 
   // ── Templates (templates.yaml) ─────────────────────────────────────────────
-  async function loadTemplates() {
-    try {
-      const text = await fetch('templates.yaml').then(r => r.text());
-      const parsed = jsyaml.load(text);
-      templates = parsed.templates || {};
-      buildTemplateSelect();
-    } catch (e) {
-      console.warn('templates.yaml no disponible', e);
-    }
-  }
-
   function buildTemplateSelect() {
     const sel = $('tp-template');
     const ORIG_PREFIX = 'orig_';
@@ -265,11 +282,6 @@
       });
     });
 
-    // Close on outside tap
-    document.addEventListener('pointerdown', e => {
-      const pop = $('timbre-popover');
-      if (!pop.classList.contains('hidden') && !pop.contains(e.target)) closeTimbrePopover();
-    }, true);
   }
 
   function setActiveInGroup(groupId, activeBtn) {
@@ -278,16 +290,17 @@
   }
 
   function openTimbrePopover(color) {
+    showPopover($('timbre-popover'), $('btn-edit-color'));
     timbreTargetColor = color;
     $('tp-swatch').style.background = color;
     $('tp-template').value = '';
     syncPopoverControls(color);
-    $('timbre-popover').classList.remove('hidden');
+    positionPopover();
+    $('tp-template').focus({ preventScroll: true });
   }
 
   function closeTimbrePopover() {
-    $('timbre-popover').classList.add('hidden');
-    timbreTargetColor = null;
+    hidePopover(true);
   }
 
   function previewTimbre() {
@@ -299,23 +312,14 @@
 
   // ── Dash gap popover ───────────────────────────────────────────────────────
   function openDashPopover(e) {
+    refreshToolOptions();
     const pop = $('dash-popover');
     const slider = $('slider-dash-gap');
     slider.value = Canvas.getDashGap();
     updateDashPreview(Canvas.getDashGap());
 
-    // Show first to measure real size, then position above the button
-    pop.style.left = '-9999px';
-    pop.style.top  = '-9999px';
-    pop.style.bottom = '';
-    pop.classList.remove('hidden');
-
-    const popRect = pop.getBoundingClientRect();
-    const btnRect = $('btn-line-dashed').getBoundingClientRect();
-    const left = Math.max(8, Math.min(btnRect.left, window.innerWidth - popRect.width - 8));
-    const top  = Math.max(8, btnRect.top - popRect.height - 8);
-    pop.style.left = left + 'px';
-    pop.style.top  = top  + 'px';
+    showPopover(pop, $('btn-dash-settings'));
+    pop.querySelector('button').focus({ preventScroll: true });
 
     slider.oninput = ev => {
       const val = parseInt(ev.target.value, 10);
@@ -323,10 +327,20 @@
       updateDashPreview(val);
     };
 
-    // Close on outside click
-    setTimeout(() => {
-      document.addEventListener('pointerdown', closeDashPopover, { once: true, capture: true });
-    }, 0);
+  }
+
+  function refreshToolOptions() {
+    const tool = Canvas.getTool();
+    const line = tool.startsWith('line-');
+    const create = ['circle','square','triangle','star','text'].includes(tool);
+    const visible = { 'line-options': line, 'create-options': create, 'width-options': tool === 'pencil' || line || (create && tool !== 'text'), 'erase-options': tool === 'eraser', 'text-options': tool === 'text', 'paint-options': tool === 'paint', 'dash-options': tool === 'line-dashed', 'visual-options-note': tool === 'pencil' || line || (create && tool !== 'text') };
+    Object.entries(visible).forEach(([id, show]) => { $(id).hidden = !show; });
+    $('tool-options-title').textContent = 'Opciones de ' + (line ? 'línea' : create ? 'crear' : tool === 'pencil' ? 'dibujo libre' : tool === 'paint' ? 'color / sonido' : 'borrado');
+    $('tool-width').value = Canvas.getWidth();
+    $('eraser-size').value = Canvas.getEraserRadius();
+    $('annotation-text').value = Canvas.getAnnotation();
+    $('text-size').value = Canvas.getTextSize();
+    positionPopover();
   }
 
   function updateDashPreview(gap) {
@@ -335,10 +349,69 @@
     if (line) line.setAttribute('stroke-dasharray', `${dash.toFixed(1)} ${gap}`);
   }
 
-  function closeDashPopover(e) {
-    const pop = $('dash-popover');
-    if (!pop.contains(e.target)) pop.classList.add('hidden');
-    else document.addEventListener('pointerdown', closeDashPopover, { once: true, capture: true });
+  function hidePopover(restoreFocus = false) {
+    if (!activePopover) return;
+    activePopover.classList.add('hidden');
+    popoverAnchor?.setAttribute('aria-expanded', 'false');
+    if (activePopover.id === 'timbre-popover') timbreTargetColor = null;
+    activePopover = null;
+    popoverAnchor = null;
+    if (restoreFocus && returnFocus?.isConnected) returnFocus.focus({ preventScroll: true });
+    returnFocus = null;
+  }
+
+  function showPopover(pop, anchor) {
+    hidePopover();
+    returnFocus = document.activeElement === document.body ? anchor : document.activeElement;
+    activePopover = pop;
+    popoverAnchor = anchor;
+    anchor.setAttribute('aria-expanded', 'true');
+    pop.classList.remove('hidden');
+    positionPopover();
+  }
+
+  function positionPopover() {
+    if (!activePopover) return;
+    const viewport = window.visualViewport;
+    const x = viewport?.offsetLeft || 0, y = viewport?.offsetTop || 0;
+    const width = viewport?.width || window.innerWidth;
+    const height = viewport?.height || window.innerHeight;
+    activePopover.style.maxWidth = Math.max(0, width - 16) + 'px';
+    activePopover.style.maxHeight = Math.max(0, height - 16) + 'px';
+    const box = activePopover.getBoundingClientRect();
+    const anchor = popoverAnchor.getBoundingClientRect();
+    const left = Math.max(x + 8, Math.min(anchor.left, x + width - box.width - 8));
+    let top = anchor.top - box.height - 8;
+    if (top < y + 8) top = anchor.bottom + 8;
+    top = Math.max(y + 8, Math.min(top, y + height - box.height - 8));
+    activePopover.style.left = left + 'px';
+    activePopover.style.top = top + 'px';
+  }
+
+  function bindPopovers() {
+    const about = $('about-popover');
+    $('btn-about').addEventListener('click', () => {
+      hidePopover();
+      about.showModal();
+      $('btn-about').setAttribute('aria-expanded', 'true');
+      $('about-close').focus();
+    });
+    $('about-close').addEventListener('click', () => about.close());
+    about.addEventListener('close', () => { $('btn-about').setAttribute('aria-expanded', 'false'); $('btn-about').focus({ preventScroll: true }); });
+    about.addEventListener('click', e => {
+      const r = about.getBoundingClientRect();
+      if (e.target === about && (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom)) about.close();
+    });
+    document.addEventListener('pointerdown', e => {
+      if (activePopover && !activePopover.contains(e.target) && !popoverAnchor.contains(e.target)) hidePopover();
+    }, true);
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && activePopover) { e.preventDefault(); hidePopover(true); }
+    });
+    window.addEventListener('resize', positionPopover);
+    document.addEventListener('scroll', positionPopover, true);
+    window.visualViewport?.addEventListener('resize', positionPopover);
+    window.visualViewport?.addEventListener('scroll', positionPopover);
   }
 
   // ── Sweep row ──────────────────────────────────────────────────────────────
@@ -352,7 +425,12 @@
 
       const btn = document.createElement('button');
       btn.textContent = Scanner.SWEEP_LABELS[id];
-      btn.setAttribute('aria-label', 'sweep ' + id);
+      btn.setAttribute('aria-label', 'Barrido ' + Scanner.SWEEP_LABELS[id]);
+      btn.title = 'Barrido ' + Scanner.SWEEP_LABELS[id];
+      const initial = settings.sweeps[id];
+      btn.setAttribute('aria-pressed', String(initial.active));
+      btn.classList.toggle('sweep-on', initial.active);
+      item.classList.toggle('on', initial.active);
       btn.style.borderRadius = '8px';
       btn.style.width  = '32px';
       btn.style.height = '32px';
@@ -361,12 +439,16 @@
       const vol = document.createElement('input');
       vol.type      = 'range';
       vol.className = 'sweep-vol';
-      vol.min = 0; vol.max = 1; vol.step = 0.01; vol.value = 0.6;
+      vol.setAttribute('aria-label', 'Volumen del barrido ' + Scanner.SWEEP_LABELS[id]);
+      vol.disabled = !initial.active;
+      vol.min = 0; vol.max = 1; vol.step = 0.01; vol.value = initial.volume;
 
       btn.addEventListener('click', () => {
         const on = Scanner.toggleSweep(id);
         btn.classList.toggle('sweep-on', on);
         item.classList.toggle('on', on);
+        btn.setAttribute('aria-pressed', String(on));
+        vol.disabled = !on;
       });
       vol.addEventListener('input', e => {
         Scanner.setSweepVol(id, parseFloat(e.target.value));
@@ -451,14 +533,64 @@
     beats.addEventListener('change', update);
   }
 
+  function applyInitialControls() {
+    $('bpm-value').textContent = settings.music.bpm;
+    $('slider-master-vol').value = settings.music.masterVolume;
+    $('select-key').value = settings.music.root;
+    $('select-scale').value = settings.music.scale;
+    $('chk-quantize').checked = settings.drawing.quantize;
+    $('slider-cell-size').value = settings.drawing.cellSize;
+    $('chk-measures').checked = settings.drawing.guides;
+    $('sel-beats').value = settings.drawing.divisions;
+    $('slider-dash-gap').value = settings.drawing.dashGap;
+    $('color-bg1').value = settings.background.first;
+    $('color-bg2').value = settings.background.second;
+    $('btn-grad-dir').textContent = gradDir === 'to bottom' ? '↕' : '↔';
+    const tools = { pencil: 'btn-pencil', 'line-solid': 'btn-line-solid', 'line-dashed': 'btn-line-solid', square: 'btn-circle', triangle: 'btn-circle', star: 'btn-circle', text: 'btn-circle', paint: 'btn-paint', circle: 'btn-circle', eraser: 'btn-eraser' };
+    document.querySelectorAll('.tool-btn').forEach(button => {
+      const active = button.id === tools[settings.drawing.tool];
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+  }
+
   // ── Helper ─────────────────────────────────────────────────────────────────
   function $(id) { return document.getElementById(id); }
 
   // ── Boot ───────────────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', () => {
-    Canvas.init(document.getElementById('canvas'));
-    Audio.init();
-    Scanner.init();
+    window.dibusynthReady = boot();
+  }, { once: true });
+
+  async function boot() {
+    const loaded = await AppConfig.load();
+    settings = loaded.settings;
+    if (settings.background.randomize) {
+      const colors = settings.palette.map(item => item.color);
+      const first = colors.splice(Math.floor(Math.random() * colors.length), 1)[0];
+      const second = colors.length ? colors[Math.floor(Math.random() * colors.length)] : first;
+      const soften = color => '#' + [1, 3, 5].map(offset => {
+        const channel = parseInt(color.slice(offset, offset + 2), 16);
+        return Math.round(255 + (channel - 255) * settings.background.tint).toString(16).padStart(2, '0');
+      }).join('');
+      settings.background.first = soften(first);
+      settings.background.second = soften(second);
+    }
+    templates = loaded.templates;
+    bpm = settings.music.bpm;
+    bg1 = settings.background.first;
+    bg2 = settings.background.second;
+    gradDir = settings.background.direction;
+    settings.palette.filter(p => p.muted).forEach(p => mutedColors.add(p.color));
+    Audio.init(settings.music);
+    Canvas.init(document.getElementById('canvas'), settings);
+    Scanner.init(settings);
+    if (loaded.warnings.length) {
+      const status = $('config-status');
+      status.hidden = false;
+      status.textContent = 'Hay ajustes YAML que no se pudieron cargar. Se usaron valores de respaldo; revisá los archivos y la consola del navegador.';
+      console.warn('Configuración de dibusynth:', loaded.warnings);
+    }
     window.addEventListener('resize', () => setTimeout(() => Canvas.resize(), 50));
     init();
     // Set panel height CSS var so timbre popover positions above it
@@ -467,5 +599,5 @@
     new ResizeObserver(() => {
       document.documentElement.style.setProperty('--panel-h', panel.offsetHeight + 'px');
     }).observe(panel);
-  });
+  }
 })();

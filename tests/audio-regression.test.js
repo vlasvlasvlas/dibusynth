@@ -11,7 +11,7 @@ function canvasFixture() {
   const element = { offsetWidth: 400, offsetHeight: 300, getContext: () => context,
     addEventListener: (name, cb) => handlers[name] = cb, setPointerCapture() {},
     getBoundingClientRect: () => ({ left: 0, top: 0 }) };
-  const box = { window: { devicePixelRatio: 1 } };
+  const box = { window: { devicePixelRatio: 1 }, Audio: { getOctaveBoundaryYs: () => [] }, ResizeObserver: class { observe() {} } };
   vm.runInNewContext(source('canvas') + ';globalThis.api = Canvas;', box);
   const api = box.api; api.init(element);
   function line(points, tool = 'pencil', color = api.COLORS[0]) {
@@ -193,4 +193,37 @@ test('a narrow crossing completes its attack rather than becoming inaudible', ()
   api.syncSweep('lr', [], {}, 0.6, 0.052);
   const events = oscillators[0].output.gain.events;
   assert.ok(events.some(e => e[0] === 'hold' && Math.abs(e[1] - 0.065) < 1e-9));
+});
+
+test('paint changes an existing sound and undo restores its notes even after quantizing', () => {
+  const {api,line,snapshot}=canvasFixture();
+  line([[30,80],[230,80]],'line-solid'); const before=snapshot();
+  line([[120,80]],'paint',api.COLORS[1]);
+  assert.equal(api.getHGrid().get(120)[0].color,api.COLORS[1]);
+  api.setQuantize(true,25); api.undo(); api.setQuantize(false);
+  assert.equal(snapshot(),before);
+  line([[120,80]],'eraser'); assert.equal(api.getHGrid().size,0);
+  api.undo(); assert.equal(snapshot(),before);
+  api.clear(); api.undo(); assert.equal(snapshot(),before);
+});
+
+test('new figures are audible, reversible through grid, and annotations stay silent', () => {
+  const {api,line,snapshot}=canvasFixture();
+  for(const tool of ['square','triangle','star']) {
+    api.clear(); line([[130,130],[180,180]],tool);
+    assert.ok(api.getHGrid().size>20,tool); const before=snapshot();
+    api.setQuantize(true,25); api.setQuantize(false); assert.equal(snapshot(),before);
+  }
+  const before=snapshot(); api.setAnnotation('Hola'); line([[20,20]],'text');
+  assert.equal(snapshot(),before); api.setQuantize(true); api.setQuantize(false);
+  assert.equal(snapshot(),before); api.undo(); assert.equal(snapshot(),before);
+});
+
+test('a single pencil tap creates an audible point, survives grid, and supports undo', () => {
+  const {api,line,snapshot}=canvasFixture();
+  line([[101,103]]);
+  assert.equal(api.getHGrid().get(101)[0].y,103);
+  assert.equal(api.getVGrid().get(103)[0].x,101);
+  const before=snapshot(); api.setQuantize(true,25); api.setQuantize(false);
+  assert.equal(snapshot(),before); api.undo(); assert.equal(api.getHGrid().size,0);
 });

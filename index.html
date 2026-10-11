@@ -9,73 +9,108 @@
 <body>
   <div id="app">
     <canvas id="canvas"></canvas>
+    <button id="btn-about" aria-label="Acerca de dibusynth" title="Acerca del proyecto" aria-haspopup="dialog" aria-controls="about-popover" aria-expanded="false">?</button>
 
-    <div id="panel">
-      <div class="panel-row" id="row-transport">
-        <button id="btn-play" aria-label="play">▶</button>
-        <button id="btn-pencil" class="tool-btn active" aria-label="pencil">✏</button>
-        <button id="btn-line-solid" class="tool-btn" aria-label="solid line">—</button>
-        <button id="btn-line-dashed" class="tool-btn" aria-label="dashed line">╌</button>
-        <button id="btn-circle" class="tool-btn" aria-label="circle">○</button>
-        <button id="btn-eraser" class="tool-btn" aria-label="eraser">◻</button>
-        <button id="btn-undo" aria-label="undo">↩</button>
-        <button id="btn-clear" aria-label="clear">✕</button>
-        <div class="bpm-control">
-          <button id="btn-bpm-down" aria-label="bpm down">−</button>
-          <span id="bpm-value">90</span>
-          <button id="btn-bpm-up" aria-label="bpm up">+</button>
-        </div>
-        <div class="vol-control">
-          <label for="slider-master-vol">vol</label>
-          <input type="range" id="slider-master-vol" min="0" max="1" step="0.01" value="0.7">
-        </div>
+    <div id="panel" aria-label="Controles del instrumento">
+      <p id="config-status" role="status" hidden></p>
+      <div class="panel-band">
+        <section class="control-group" aria-labelledby="label-play">
+          <h2 id="label-play">Reproducción</h2>
+          <div class="panel-row" id="row-transport">
+            <button id="btn-play" aria-label="Reproducir" title="Reproducir / pausar">▶</button>
+            <div class="bpm-control">
+              <span class="control-label">BPM</span>
+              <button id="btn-bpm-down" aria-label="Bajar BPM">−</button>
+              <span id="bpm-value">90</span>
+              <button id="btn-bpm-up" aria-label="Subir BPM">+</button>
+            </div>
+            <div class="vol-control">
+              <label for="slider-master-vol">Volumen</label>
+              <input type="range" id="slider-master-vol" min="0" max="1" step="0.01" value="0.65">
+            </div>
+          </div>
+        </section>
+        <section class="control-group" aria-labelledby="label-sweeps">
+          <h2 id="label-sweeps">Barridos</h2>
+          <div class="panel-row" id="row-sweeps"></div>
+        </section>
       </div>
-
-      <div class="panel-row" id="row-colors">
-        <!-- populated by ui.js -->
+      <div class="panel-band">
+        <section class="control-group" aria-labelledby="label-draw">
+          <h2 id="label-draw">Dibujo</h2>
+          <div class="panel-row" id="row-drawing">
+            <button id="btn-pencil" class="tool-btn active" aria-label="Lápiz" title="Lápiz" aria-pressed="true">✏</button>
+            <button id="btn-line-solid" class="tool-btn" aria-label="Línea" title="Línea">—</button>
+            <button id="btn-circle" class="tool-btn" aria-label="Crear figuras o texto" title="Crear">Crear</button>
+            <button id="btn-dash-settings" class="tool-btn" aria-label="Opciones de herramienta" title="Opciones" aria-haspopup="dialog" aria-controls="dash-popover" aria-expanded="false">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </button>
+            <button id="btn-paint" class="tool-btn" aria-label="Cambiar color y sonido" title="Cambiar color y sonido"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m4 10 8-8 9 9-8 8H9l-5-5zM4 10h16M8 2l6 6M21 15s-3 3-3 5a3 3 0 0 0 6 0c0-2-3-5-3-5"/></svg></button>
+            <button id="btn-eraser" class="tool-btn" aria-label="Borrar trazos" title="Borrar trazos">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 3 6 6a2 2 0 0 1 0 3l-8 8H7l-4-4a2 2 0 0 1 0-3L12 3a2 2 0 0 1 3 0Z"/><path d="m8 8 9 9M13 20h8"/></svg>
+            </button>
+            <span class="sep" aria-hidden="true"></span>
+            <button id="btn-undo" aria-label="Deshacer" title="Deshacer">↩</button>
+            <button id="btn-clear" class="danger-button" aria-label="Borrar todo" title="Borrar todo">✕</button>
+          </div>
+        </section>
+        <section class="control-group instruments" aria-labelledby="label-colors">
+          <div class="group-heading"><h2 id="label-colors">Instrumentos</h2><button id="btn-edit-color" class="text-button" aria-haspopup="dialog" aria-controls="timbre-popover" aria-expanded="false">Timbre del color</button></div>
+          <div class="panel-row" id="row-colors"></div>
+        </section>
       </div>
-
-      <div class="panel-row" id="row-sweeps">
-        <!-- sweep items prepended by ui.js -->
-        <div class="sep"></div>
-        <select id="select-key" aria-label="key"></select>
-        <select id="select-scale" aria-label="scale"></select>
-        <div class="sep"></div>
-        <label class="quantize-label" title="Quantize to grid">
-          <input type="checkbox" id="chk-quantize" aria-label="quantize">
-          <span>grid</span>
-        </label>
-        <input type="range" id="slider-cell-size" min="10" max="80" step="5" value="25" title="Grid cell size" aria-label="cell size">
-        <div class="sep"></div>
-        <label class="quantize-label" title="Grilla de divisiones verticales">
-          <input type="checkbox" id="chk-measures" aria-label="divisiones">
-          <span>div</span>
-        </label>
-        <select id="sel-beats" aria-label="divisiones verticales" title="Divisiones verticales">
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4" selected>4</option>
-          <option value="6">6</option>
-          <option value="8">8</option>
-          <option value="12">12</option>
-          <option value="16">16</option>
-        </select>
-        <div class="sep"></div>
-        <label class="grad-label" title="Background color 1">
-          <input type="color" id="color-bg1" value="#f0ebe0" aria-label="background color 1">
-        </label>
-        <label class="grad-label" title="Background color 2">
-          <input type="color" id="color-bg2" value="#ffffff" aria-label="background color 2">
-        </label>
-        <button id="btn-grad-dir" title="Gradient direction" aria-label="gradient direction">↕</button>
+      <div class="panel-band">
+        <section class="control-group" aria-labelledby="label-compose">
+          <h2 id="label-compose">Composición</h2>
+          <div class="panel-row" id="row-composition">
+            <label class="field">Tono <select id="select-key" aria-label="Tonalidad"></select></label>
+            <label class="field">Escala <select id="select-scale" aria-label="Escala"></select></label>
+            <div class="field-group">
+              <label class="quantize-label" title="Ajustar el dibujo a celdas"><input type="checkbox" id="chk-quantize"><span>Cuantizar</span></label>
+              <input type="range" id="slider-cell-size" min="10" max="80" step="5" value="25" title="Tamaño de celda" aria-label="Tamaño de celda">
+            </div>
+            <div class="field-group">
+              <label class="quantize-label" title="Mostrar guías visuales; no cambia el ritmo"><input type="checkbox" id="chk-measures"><span>Guías</span></label>
+              <select id="sel-beats" aria-label="Cantidad de guías visuales" title="Divisiones visuales">
+                <option value="2">2</option><option value="3">3</option><option value="4" selected>4</option><option value="6">6</option><option value="8">8</option><option value="12">12</option><option value="16">16</option>
+              </select>
+            </div>
+          </div>
+        </section>
+        <section class="control-group" aria-labelledby="label-bg">
+          <h2 id="label-bg">Fondo</h2>
+          <div class="panel-row" id="row-background">
+            <label class="grad-label" title="Primer color del fondo"><input type="color" id="color-bg1" value="#f0ebe0" aria-label="Primer color del fondo"></label>
+            <label class="grad-label" title="Segundo color del fondo"><input type="color" id="color-bg2" value="#ffffff" aria-label="Segundo color del fondo"></label>
+            <button id="btn-grad-dir" title="Dirección del degradado" aria-label="Dirección del degradado">↕</button>
+          </div>
+        </section>
       </div>
     </div>
   </div>
 
+  <dialog id="about-popover" aria-labelledby="about-title">
+    <div class="popover-heading">
+      <h2 id="about-title">dibusynth</h2>
+      <button id="about-close" aria-label="Cerrar información del proyecto">✕</button>
+    </div>
+    <p>Un sintetizador que transforma dibujos en música. La altura del trazo elige la nota, el color elige el instrumento y los barridos recorren tu dibujo para hacerlo sonar.</p>
+    <p>Para empezar: elegí un color, dibujá, activá una flecha de barrido y tocá ▶.</p>
+    <p>Podés personalizar los instrumentos y los ajustes iniciales con los archivos YAML del proyecto. En GitHub están el código y la guía completa.</p>
+    <a href="https://github.com/vlasvlasvlas/dibusynth" target="_blank" rel="noopener noreferrer">Ver el proyecto en GitHub ↗<span class="sr-only"> (abre una pestaña nueva)</span></a>
+  </dialog>
+
   <!-- Dash gap popover -->
-  <div id="dash-popover" class="hidden" role="dialog" aria-label="espaciado del punteado">
-    <span class="dash-pop-label">espacio entre guiones</span>
-    <svg id="dash-preview-svg" width="140" height="12" aria-hidden="true">
+  <div id="dash-popover" class="popover hidden" role="dialog" aria-label="Opciones de herramienta">
+    <div class="popover-heading"><span id="tool-options-title">Opciones</span><button id="dash-close" aria-label="Cerrar opciones">✕</button></div>
+    <label id="line-options">Tipo de línea<select id="line-kind"><option value="line-solid">Continua</option><option value="line-dashed">Punteada</option></select></label>
+    <label id="create-options">Crear<select id="create-kind"><option value="circle">Círculo</option><option value="square">Cuadrado</option><option value="triangle">Triángulo</option><option value="star">Estrella</option><option value="text">Texto (no suena)</option></select></label>
+    <label id="width-options">Grosor <input id="tool-width" type="range" min="1" max="24" step="1"></label>
+    <label id="erase-options">Tamaño del borrador <input id="eraser-size" type="range" min="4" max="100"></label>
+    <div id="text-options"><label>Texto <input id="annotation-text" type="text" maxlength="200" placeholder="Escribí una anotación"></label><label>Tamaño <input id="text-size" type="range" min="12" max="72"></label><p>Tocá el canvas para colocarlo. No produce sonido.</p></div>
+    <p id="paint-options">Elegí un color y tocá un trazo o figura para cambiar su color y sonido.</p>
+    <div id="dash-options"><p>Separación del punteado</p>
+    <svg id="dash-preview-svg" width="140" height="12" viewBox="0 0 140 12" aria-hidden="true">
       <line x1="2" y1="6" x2="138" y2="6" stroke="#444" stroke-width="2.5" stroke-dasharray="10 7" stroke-linecap="round"/>
     </svg>
     <div class="dash-slider-row">
@@ -83,10 +118,12 @@
       <input type="range" id="slider-dash-gap" min="2" max="50" step="1" value="7" aria-label="gap del punteado">
       <span class="dash-hint">más</span>
     </div>
+    </div>
+    <p id="visual-options-note">El grosor y el punteado son visuales; no cambian el sonido.</p>
   </div>
 
   <!-- Timbre config popover -->
-  <div id="timbre-popover" class="hidden" role="dialog" aria-label="timbre config">
+  <div id="timbre-popover" class="popover hidden" role="dialog" aria-label="timbre config">
     <div class="tp-header">
       <div id="tp-swatch"></div>
       <select id="tp-template" aria-label="template de síntesis">
@@ -132,7 +169,7 @@
     <!-- Release / Detune / Vol -->
     <div class="tp-row">
       <span class="tp-lbl">rel</span>
-      <input type="range" id="t-release" min="20" max="2000" step="10" value="300">
+      <input type="range" id="t-release" min="20" max="3000" step="10" value="300">
       <span class="tp-lbl">det</span>
       <input type="range" id="t-detune" min="-50" max="50" step="1" value="0">
       <span class="tp-lbl">vol</span>
@@ -141,6 +178,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/js-yaml@4/dist/js-yaml.min.js"></script>
+  <script src="config.js"></script>
   <script src="canvas.js"></script>
   <script src="audio.js"></script>
   <script src="scanner.js"></script>

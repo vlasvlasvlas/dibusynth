@@ -1,0 +1,57 @@
+# Ajustes iniciales de dibusynth. Se cargan al abrir o recargar la página.
+# Los controles de la interfaz cambian la sesión, no escriben este archivo.
+# Ver README.md para instrucciones, rangos y ejemplos.
+
+music:
+  bpm: 90
+  bpmStep: 5
+  masterVolume: 0.65
+  root: C
+  scale: major
+  octaves: 4
+  baseOctave: 3
+  beatsPerSweep: 4
+
+# lr = →, rl = ←, tb = ↓, bt = ↑. Activar no inicia la reproducción.
+sweeps:
+  lr: { active: false, volume: 0.6 }
+  rl: { active: false, volume: 0.6 }
+  tb: { active: false, volume: 0.6 }
+  bt: { active: false, volume: 0.6 }
+
+drawing:
+  tool: pencil
+  selectedColor: "#27ae60"
+  pencilWidth: 4
+  shapeWidth: 3
+  eraserRadius: 24
+  dashGap: 7
+  quantize: false
+  cellSize: 25
+  guides: false
+  divisions: 4
+  octaveGuides: true
+  text: "" # Anotación para colocar con Crear → Texto.
+  textSize: 24
+
+background:
+  randomize: true # Elegir dos colores de la paleta en cada recarga.
+  tint: 0.05 # 5 % de color y 95 % de blanco.
+  # Colores fijos cuando randomize es false.
+  first: "#f0ebe0"
+  second: "#ffffff"
+  direction: to bottom
+
+# El orden de esta lista es el orden de la paleta.
+# preset referencia una entrada de templates.yaml.
+# sound permite sobrescribir parámetros de ese preset para un solo color.
+palette:
+  - { color: "#27ae60", label: Verde, preset: orig_verde, muted: false }
+  - { color: "#e74c3c", label: Rojo, preset: orig_rojo, muted: false }
+  - { color: "#8e44ad", label: Violeta, preset: orig_violeta, muted: false }
+  - { color: "#f39c12", label: Naranja, preset: orig_naranja, muted: false }
+  - { color: "#2980b9", label: Azul, preset: orig_azul, muted: false }
+  - { color: "#e91e8c", label: Rosa, preset: orig_rosa, muted: false }
+  - { color: "#5dade2", label: Celeste, preset: orig_celeste, muted: false }
+  - { color: "#222222", label: Negro, preset: orig_negro, muted: false }
+  - { color: "#f0a500", label: Dorado, preset: orig_dorado, muted: false }

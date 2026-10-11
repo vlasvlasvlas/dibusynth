@@ -15,11 +15,15 @@ const Canvas = (() => {
     '#222222': { waveform:'sine',     octave:-1, detune:0,  filterType:'lowpass',  filterFreq:800,  filterQ:1,   release:600, gain:0.85 }, // sub
     '#f0a500': { waveform:'triangle', octave:0,  detune:4,  filterType:'lowpass',  filterFreq:3000, filterQ:1.2, release:450, gain:0.72 }, // mellow saw
   };
-  const ERASE_RADIUS = 24;
-  const FREE_WIDTH   = 4;
-  const SHAPE_WIDTH  = 3;
+  let ERASE_RADIUS = 24;
+  let FREE_WIDTH   = 4;
+  let SHAPE_WIDTH  = 3;
 
   let el, ctx;
+  let annotation = '', textSize = 24;
+  let history = [];
+  const remember = () => { history.push(JSON.stringify(strokes)); if (history.length > 100) history.shift(); };
+  const polygonTypes = ['square', 'triangle', 'star'];
   let strokes = [];
   let currentStroke = null;
   let shapeStart    = null;
@@ -30,16 +34,32 @@ const Canvas = (() => {
   let cellSize      = 25;
   let dashGap       = 7;   // gap between dashes for new dashed lines
   let measuresOn    = false;
+  let octaveGuides = true;
   let measureCount  = 4;
   let beatsPerMeasure = 4;
   let hGrid         = new Map();
   let vGrid         = new Map();
   const colorConfig = {};
 
-  function init(canvasEl) {
+  function init(canvasEl, settings = {}) {
+    const drawing = settings.drawing || {};
+    if (settings.palette) COLORS.splice(0, COLORS.length, ...settings.palette.map(p => p.color));
+    ERASE_RADIUS = drawing.eraserRadius ?? 24;
+    FREE_WIDTH = drawing.pencilWidth ?? 4;
+    SHAPE_WIDTH = drawing.shapeWidth ?? 3;
+    activeTool = drawing.tool ?? 'pencil';
+    currentColor = drawing.selectedColor ?? COLORS[0];
+    quantize = drawing.quantize ?? false;
+    cellSize = drawing.cellSize ?? 25;
+    dashGap = drawing.dashGap ?? 7;
+    measuresOn = drawing.guides ?? false;
+    beatsPerMeasure = drawing.divisions ?? 4;
+    octaveGuides = drawing.octaveGuides ?? true;
+    annotation = drawing.text ?? '';
+    textSize = drawing.textSize ?? 24;
     el  = canvasEl;
     ctx = el.getContext('2d');
-    COLORS.forEach(c => { colorConfig[c] = { ...COLOR_PRESETS[c] }; });
+    COLORS.forEach(c => { colorConfig[c] = { ...(COLOR_PRESETS[c] || COLOR_PRESETS['#27ae60']), ...(settings.palette?.find(p => p.color === c)?.sound || {}) }; });
     resize();
     bindEvents();
     // Re-sync backing store whenever the canvas CSS size changes (panel height changes, etc.)
@@ -98,6 +118,35 @@ const Canvas = (() => {
     return dedupe(pts);
   }
 
+  function polygonPoints(type, a, b) {
+    if (type === 'square') {
+      const size = Math.max(Math.abs(b.x-a.x), Math.abs(b.y-a.y));
+      const x = a.x + Math.sign(b.x-a.x || 1)*size, y = a.y + Math.sign(b.y-a.y || 1)*size;
+      return [a, {x,y:a.y}, {x,y}, {x:a.x,y}, a];
+    }
+    const radius = Math.hypot(b.x-a.x,b.y-a.y), count = type === 'star' ? 10 : 3;
+    const pts = Array.from({length:count}, (_,i) => {
+      const angle = -Math.PI/2+i*2*Math.PI/count;
+      const r = radius * (type === 'star' && i%2 ? 0.45 : 1);
+      return {x:a.x+Math.cos(angle)*r,y:a.y+Math.sin(angle)*r};
+    });
+    return [...pts,pts[0]];
+  }
+  function hit(s, pos, radius) {
+    if (s.type === 'text') {
+      ctx.save(); ctx.font = `${s.textSize}px system-ui`;
+      const width = ctx.measureText(s.text).width; ctx.restore();
+      return pos.x >= s.x-radius && pos.x <= s.x+width+radius && pos.y >= s.y-radius && pos.y <= s.y+s.textSize+radius;
+    }
+    const pts = s.rawPoints;
+    for (let i=0;i<pts.length;i++) {
+      const a=pts[i], b=pts[Math.min(i+1,pts.length-1)], dx=b.x-a.x,dy=b.y-a.y;
+      const t=Math.max(0,Math.min(1,((pos.x-a.x)*dx+(pos.y-a.y)*dy)/(dx*dx+dy*dy || 1)));
+      if (Math.hypot(pos.x-a.x-t*dx,pos.y-a.y-t*dy) <= radius+s.width/2) return true;
+    }
+    return false;
+  }
+
   // ── Pointer events ───────────────────────────────────────────────────────
 
   function bindEvents() {
@@ -116,7 +165,12 @@ const Canvas = (() => {
     e.preventDefault();
     el.setPointerCapture(e.pointerId);
     const raw = getPos(e);
-    if (activeTool === 'pencil') {
+    if (activeTool === 'paint') {
+      const target = [...strokes].reverse().find(s => hit(s, raw, 12));
+      if (target && target.color !== currentColor) { remember(); target.color = currentColor; buildGrid(); redraw(); }
+    } else if (activeTool === 'text') {
+      if (annotation.trim()) { remember(); strokes.push({type:'text',text:annotation.trim(),textSize,color:currentColor,x:raw.x,y:raw.y,rawPoints:[],points:[]}); redraw(); }
+    } else if (activeTool === 'pencil') {
       const p = snapPos(raw);
       currentStroke = {
         type: 'free', color: currentColor,
@@ -124,6 +178,7 @@ const Canvas = (() => {
         rawPoints: [p], points: [p]
       };
     } else if (activeTool === 'eraser') {
+      remember();
       eraseAt(raw);
     } else {
       // line-solid, line-dashed, circle
@@ -160,10 +215,12 @@ const Canvas = (() => {
   }
 
   function onUp() {
-    if (activeTool === 'pencil' && currentStroke && currentStroke.rawPoints.length > 1) {
+    if (activeTool === 'pencil' && currentStroke && currentStroke.rawPoints.length > 0) {
+      remember();
       strokes.push(currentStroke);
       buildGrid();
       currentStroke = null;
+      redraw();
     } else if (shapePreview && shapeStart) {
       const { type, color, p1, p2 } = shapePreview;
       let pts, extraData;
@@ -172,12 +229,16 @@ const Canvas = (() => {
         const r  = Math.sqrt(dx * dx + dy * dy);
         pts = circlePoints(p1.x, p1.y, r);
         extraData = { cx: p1.x, cy: p1.y, r };
+      } else if (polygonTypes.includes(type)) {
+        pts = polygonPoints(type, p1, p2);
+        extraData = { p1, p2 };
       } else {
         pts = linePoints(p1, p2);
         extraData = { p1, p2 };
       }
       if (pts.length > 1) {
         const extra = type === 'line-dashed' ? { dashGap } : {};
+        remember();
         strokes.push({
           type, color, rawWidth: SHAPE_WIDTH, width: SHAPE_WIDTH,
           rawPoints: pts, points: pts, ...extraData, ...extra
@@ -196,7 +257,7 @@ const Canvas = (() => {
   function eraseAt(pos) {
     const before = strokes.length;
     strokes = strokes.filter(s =>
-      !s.points.some(p => Math.hypot(p.x - pos.x, p.y - pos.y) < ERASE_RADIUS)
+      !hit(s, pos, ERASE_RADIUS)
     );
     if (strokes.length !== before) { buildGrid(); redraw(); }
   }
@@ -221,7 +282,7 @@ const Canvas = (() => {
     }
 
     // Octave boundary lines — always visible, mark where the same notes repeat
-    const octaveYs = Audio.getOctaveBoundaryYs(h);
+    const octaveYs = octaveGuides ? Audio.getOctaveBoundaryYs(h) : [];
     if (octaveYs.length) {
       ctx.save();
       ctx.strokeStyle = 'rgba(80,80,80,0.28)';
@@ -265,8 +326,17 @@ const Canvas = (() => {
     ctx.lineJoin    = 'round';
     ctx.setLineDash([]);
 
-    if (s.type === 'free') {
-      if (s.rawPoints.length < 2) { ctx.restore(); return; }
+    if (s.type === 'text') {
+      ctx.fillStyle = s.color; ctx.font = `${s.textSize}px system-ui`; ctx.textBaseline = 'top'; ctx.fillText(s.text,s.x,s.y);
+    } else if (polygonTypes.includes(s.type)) {
+      ctx.beginPath(); s.rawPoints.forEach((p,i) => i ? ctx.lineTo(p.x,p.y) : ctx.moveTo(p.x,p.y)); ctx.stroke();
+    } else if (s.type === 'free') {
+      if (s.rawPoints.length === 1) {
+        const p = s.rawPoints[0];
+        ctx.fillStyle = s.color; ctx.beginPath(); ctx.arc(p.x,p.y,s.width/2,0,Math.PI*2); ctx.fill();
+        ctx.restore(); return;
+      }
+      if (!s.rawPoints.length) { ctx.restore(); return; }
       ctx.beginPath();
       ctx.moveTo(s.rawPoints[0].x, s.rawPoints[0].y);
       for (let i = 1; i < s.rawPoints.length; i++) ctx.lineTo(s.rawPoints[i].x, s.rawPoints[i].y);
@@ -300,7 +370,9 @@ const Canvas = (() => {
     ctx.globalAlpha = 0.65;
     ctx.setLineDash([]);
 
-    if (sp.type === 'circle') {
+    if (polygonTypes.includes(sp.type)) {
+      ctx.beginPath(); polygonPoints(sp.type,sp.p1,sp.p2).forEach((p,i) => i ? ctx.lineTo(p.x,p.y) : ctx.moveTo(p.x,p.y)); ctx.stroke();
+    } else if (sp.type === 'circle') {
       const dx = sp.p2.x - sp.p1.x, dy = sp.p2.y - sp.p1.y;
       const r  = Math.sqrt(dx * dx + dy * dy);
       ctx.beginPath();
@@ -387,6 +459,7 @@ const Canvas = (() => {
     if (size !== undefined) cellSize = size;
 
     strokes = strokes.map(s => {
+      if (s.type === 'text') return s;
       if (on) {
         const snapped = dedupe(s.rawPoints.map(p => snapPos(p)));
         // For shape strokes, re-derive points from geometry with snapping
@@ -416,8 +489,8 @@ const Canvas = (() => {
 
   // ── Public API ───────────────────────────────────────────────────────────
 
-  function undo()  { strokes.pop(); buildGrid(); redraw(); }
-  function clear() { strokes = []; currentStroke = null; shapePreview = null; hGrid = new Map(); vGrid = new Map(); redraw(); }
+  function undo() { if (!history.length) return; strokes = JSON.parse(history.pop()); setQuantize(quantize); }
+  function clear() { if (strokes.length) remember(); strokes = []; currentStroke = null; shapePreview = null; hGrid = new Map(); vGrid = new Map(); redraw(); }
   function setTool(t)  { activeTool = t; shapePreview = null; shapeStart = null; }
   function setColor(c) { currentColor = c; }
   function getHGrid()       { return hGrid; }
@@ -441,6 +514,12 @@ const Canvas = (() => {
     init, resize, redraw, undo, clear,
     setTool, setColor, setQuantize, setCellSize, setMeasures, setDashGap, getDashGap,
     getHGrid, getVGrid, getSize, getCtx, getColorConfig, setColorWaveform, setColorParam,
+    getTool: () => activeTool,
+    getWidth: () => activeTool === 'pencil' ? FREE_WIDTH : SHAPE_WIDTH,
+    setWidth: value => { if (activeTool === 'pencil') FREE_WIDTH = value; else SHAPE_WIDTH = value; },
+    getEraserRadius: () => ERASE_RADIUS, setEraserRadius: value => { ERASE_RADIUS = value; },
+    getAnnotation: () => annotation, setAnnotation: value => { annotation = value; },
+    getTextSize: () => textSize, setTextSize: value => { textSize = value; },
     COLORS
   };
 })();
