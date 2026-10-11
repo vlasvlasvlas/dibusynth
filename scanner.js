@@ -13,6 +13,7 @@ const Scanner = (() => {
   const LOOKAHEAD = 0.050;
   let bpm = 90;
   let playing = false;
+  let mutedColors = new Set();
   let scheduledTime = 0;
   let timerId = null;
   let rafId = null;
@@ -27,7 +28,7 @@ const Scanner = (() => {
     const notes = hits.map(hit => ({
       color: hit.color,
       freq: Audio.noteForY(horizontal(id) ? hit.y : (hit.y ?? coordinate), height)
-    })).filter(note => note.freq);
+    })).filter(note => note.freq && !mutedColors.has(note.color));
     Audio.syncSweep(id, notes, configs, sweeps[id].vol, time);
   }
 
@@ -153,6 +154,7 @@ const Scanner = (() => {
   }
 
   function setSweepVol(id, vol) { sweeps[id].vol = vol; }
+  function setMutedColors(set) { mutedColors = set; }
 
-  return { init, play, stop, isPlaying, setBPM, toggleSweep, setSweepVol, SWEEP_IDS, SWEEP_LABELS };
+  return { init, play, stop, isPlaying, setBPM, toggleSweep, setSweepVol, setMutedColors, SWEEP_IDS, SWEEP_LABELS };
 })();

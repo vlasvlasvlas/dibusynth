@@ -28,6 +28,7 @@ const Canvas = (() => {
   let currentColor  = COLORS[0];
   let quantize      = false;
   let cellSize      = 25;
+  let dashGap       = 7;   // gap between dashes for new dashed lines
   let measuresOn    = false;
   let measureCount  = 4;
   let beatsPerMeasure = 4;
@@ -176,9 +177,10 @@ const Canvas = (() => {
         extraData = { p1, p2 };
       }
       if (pts.length > 1) {
+        const extra = type === 'line-dashed' ? { dashGap } : {};
         strokes.push({
           type, color, rawWidth: SHAPE_WIDTH, width: SHAPE_WIDTH,
-          rawPoints: pts, points: pts, ...extraData
+          rawPoints: pts, points: pts, ...extraData, ...extra
         });
         buildGrid();
       }
@@ -275,7 +277,9 @@ const Canvas = (() => {
       ctx.lineTo(s.p2.x, s.p2.y);
       ctx.stroke();
     } else if (s.type === 'line-dashed') {
-      ctx.setLineDash([10, 7]);
+      const gap  = s.dashGap ?? 7;
+      const dash = Math.max(4, gap * 1.4);
+      ctx.setLineDash([dash, gap]);
       ctx.beginPath();
       ctx.moveTo(s.p1.x, s.p1.y);
       ctx.lineTo(s.p2.x, s.p2.y);
@@ -308,7 +312,8 @@ const Canvas = (() => {
       ctx.lineTo(sp.p2.x, sp.p2.y);
       ctx.stroke();
     } else if (sp.type === 'line-dashed') {
-      ctx.setLineDash([10, 7]);
+      const dash = Math.max(4, dashGap * 1.4);
+      ctx.setLineDash([dash, dashGap]);
       ctx.beginPath();
       ctx.moveTo(sp.p1.x, sp.p1.y);
       ctx.lineTo(sp.p2.x, sp.p2.y);
@@ -422,6 +427,9 @@ const Canvas = (() => {
   function getColorConfig() { return colorConfig; }
   function setColorWaveform(color, waveform) { colorConfig[color].waveform = waveform; }
   function setColorParam(color, param, value) { colorConfig[color][param] = value; }
+  function setDashGap(val) { dashGap = Math.max(2, Math.min(50, val)); redraw(); }
+  function getDashGap()    { return dashGap; }
+
   function setMeasures(on, count, beats) {
     measuresOn      = on;
     if (count !== undefined) measureCount    = Math.max(1, count);
@@ -431,7 +439,7 @@ const Canvas = (() => {
 
   return {
     init, resize, redraw, undo, clear,
-    setTool, setColor, setQuantize, setCellSize, setMeasures,
+    setTool, setColor, setQuantize, setCellSize, setMeasures, setDashGap, getDashGap,
     getHGrid, getVGrid, getSize, getCtx, getColorConfig, setColorWaveform, setColorParam,
     COLORS
   };

@@ -1,6 +1,7 @@
 (function UI() {
   let timbreTargetColor = null;
   let longPressTimer    = null;
+  const mutedColors     = new Set();
   let bpm = 90;
   let gradDir = 'to bottom';
   let bg1 = '#f0ebe0', bg2 = '#ffffff';
@@ -48,8 +49,16 @@
     btnPencil.addEventListener('click', () => selectTool('pencil', btnPencil));
     btnEraser.addEventListener('click', () => selectTool('eraser', btnEraser));
     $('btn-line-solid').addEventListener('click',  e => selectTool('line-solid',  e.currentTarget));
-    $('btn-line-dashed').addEventListener('click', e => selectTool('line-dashed', e.currentTarget));
     $('btn-circle').addEventListener('click',      e => selectTool('circle',      e.currentTarget));
+
+    const btnDashed = $('btn-line-dashed');
+    btnDashed.addEventListener('click',       e => selectTool('line-dashed', e.currentTarget));
+    btnDashed.addEventListener('contextmenu', e => { e.preventDefault(); openDashPopover(e); });
+    btnDashed.addEventListener('pointerdown', e => {
+      longPressTimer = setTimeout(() => { longPressTimer = null; openDashPopover(e); }, 480);
+    });
+    btnDashed.addEventListener('pointerup',   () => { clearTimeout(longPressTimer); longPressTimer = null; });
+    btnDashed.addEventListener('pointercancel', () => { clearTimeout(longPressTimer); longPressTimer = null; });
 
     $('btn-undo').addEventListener('click', () => Canvas.undo());
     $('btn-clear').addEventListener('click', () => Canvas.clear());
@@ -93,6 +102,22 @@
         openTimbrePopover(color);
       });
 
+      const muteBtn = document.createElement('button');
+      muteBtn.className = 'swatch-mute';
+      muteBtn.textContent = 'M';
+      muteBtn.setAttribute('aria-label', 'mutear ' + color);
+      muteBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        if (mutedColors.has(color)) {
+          mutedColors.delete(color);
+          muteBtn.classList.remove('muted');
+        } else {
+          mutedColors.add(color);
+          muteBtn.classList.add('muted');
+        }
+        Scanner.setMutedColors(new Set(mutedColors));
+      });
+
       sw.addEventListener('pointerdown', () => {
         longPressTimer = setTimeout(() => {
           longPressTimer = null;
@@ -116,7 +141,7 @@
         if (e.key === 'Enter' || e.key === ' ') selectColor(color, sw);
       });
 
-      wrap.append(sw, editBtn);
+      wrap.append(sw, editBtn, muteBtn);
       row.appendChild(wrap);
     });
   }
@@ -270,6 +295,43 @@
     Audio.resume();
     const cfg = Canvas.getColorConfig()[timbreTargetColor];
     Audio.triggerNote(440, cfg, 0.7, timbreTargetColor);
+  }
+
+  // ── Dash gap popover ───────────────────────────────────────────────────────
+  function openDashPopover(e) {
+    const pop = $('dash-popover');
+    const slider = $('slider-dash-gap');
+    slider.value = Canvas.getDashGap();
+    updateDashPreview(Canvas.getDashGap());
+
+    // Position near the button
+    const btnRect = $('btn-line-dashed').getBoundingClientRect();
+    pop.style.left = btnRect.left + 'px';
+    pop.style.bottom = (window.innerHeight - btnRect.top + 6) + 'px';
+    pop.classList.remove('hidden');
+
+    slider.oninput = ev => {
+      const val = parseInt(ev.target.value, 10);
+      Canvas.setDashGap(val);
+      updateDashPreview(val);
+    };
+
+    // Close on outside click
+    setTimeout(() => {
+      document.addEventListener('pointerdown', closeDashPopover, { once: true, capture: true });
+    }, 0);
+  }
+
+  function updateDashPreview(gap) {
+    // Visual hint: fewer dashes = more spaced
+    const count = Math.max(1, Math.round(12 / (gap / 5 + 1)));
+    $('dash-preview').textContent = ('╌ ').repeat(count).trim();
+  }
+
+  function closeDashPopover(e) {
+    const pop = $('dash-popover');
+    if (!pop.contains(e.target)) pop.classList.add('hidden');
+    else document.addEventListener('pointerdown', closeDashPopover, { once: true, capture: true });
   }
 
   // ── Sweep row ──────────────────────────────────────────────────────────────

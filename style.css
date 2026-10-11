@@ -141,6 +141,25 @@ input[type=range] { cursor: pointer; accent-color: #4a90d9; }
   justify-content: center;
 }
 .swatch-edit:hover { background: #eee; color: #333; }
+.swatch-mute {
+  width: 18px;
+  height: 18px;
+  font-size: 9px;
+  font-weight: 700;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  background: #f8f8f8;
+  color: #bbb;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0;
+}
+.swatch-mute:hover { background: #eee; color: #888; }
+.swatch-mute.muted { background: #e03a3a; color: #fff; border-color: #c02020; }
 
 /* Sweep items */
 .sweep-item {
@@ -197,6 +216,30 @@ input[type=color] {
 
 /* Separator */
 .sep { width: 1px; height: 24px; background: #eee; flex-shrink: 0; }
+
+/* Dash gap popover */
+#dash-popover {
+  position: fixed;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+#dash-popover.hidden { display: none; }
+.dash-preview {
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: #555;
+  white-space: nowrap;
+  min-width: 36px;
+  text-align: center;
+}
+#slider-dash-gap { width: 100px; }
 
 /* Timbre popover */
 #timbre-popover {
