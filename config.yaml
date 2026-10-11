@@ -3,7 +3,7 @@
 # Ver README.md para instrucciones, rangos y ejemplos.
 
 music:
-  bpm: 90
+  bpm: 80
   bpmStep: 5
   masterVolume: 0.65
   root: C
@@ -22,7 +22,7 @@ sweeps:
 drawing:
   tool: pencil
   selectedColor: "#27ae60"
-  pencilWidth: 4
+  pencilWidth: 12
   shapeWidth: 3
   eraserRadius: 24
   dashGap: 7

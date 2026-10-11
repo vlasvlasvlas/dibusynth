@@ -2,9 +2,9 @@ const AppConfig = (() => {
   const colors = ['#27ae60', '#e74c3c', '#8e44ad', '#f39c12', '#2980b9', '#e91e8c', '#5dade2', '#222222', '#f0a500'];
   const names = ['Verde', 'Rojo', 'Violeta', 'Naranja', 'Azul', 'Rosa', 'Celeste', 'Negro', 'Dorado'];
   const defaults = {
-    music: { bpm: 90, bpmStep: 5, masterVolume: 0.65, root: 'C', scale: 'major', octaves: 4, baseOctave: 3, beatsPerSweep: 4 },
+    music: { bpm: 80, bpmStep: 5, masterVolume: 0.65, root: 'C', scale: 'major', octaves: 4, baseOctave: 3, beatsPerSweep: 4 },
     sweeps: Object.fromEntries(['lr', 'rl', 'tb', 'bt'].map(id => [id, { active: false, volume: 0.6 }])),
-    drawing: { tool: 'pencil', selectedColor: colors[0], pencilWidth: 4, shapeWidth: 3, eraserRadius: 24, dashGap: 7, quantize: false, cellSize: 25, guides: false, divisions: 4, octaveGuides: true, text: '', textSize: 24 },
+    drawing: { tool: 'pencil', selectedColor: colors[0], pencilWidth: 12, shapeWidth: 3, eraserRadius: 24, dashGap: 7, quantize: false, cellSize: 25, guides: false, divisions: 4, octaveGuides: true, text: '', textSize: 24 },
     background: { randomize: true, tint: 0.05, first: '#f0ebe0', second: '#ffffff', direction: 'to bottom' },
     palette: colors.map((color, i) => ({ color, label: names[i], preset: 'orig_' + names[i].toLowerCase(), muted: false, sound: {} }))
   };

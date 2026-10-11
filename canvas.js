@@ -16,7 +16,7 @@ const Canvas = (() => {
     '#f0a500': { waveform:'triangle', octave:0,  detune:4,  filterType:'lowpass',  filterFreq:3000, filterQ:1.2, release:450, gain:0.72 }, // mellow saw
   };
   let ERASE_RADIUS = 24;
-  let FREE_WIDTH   = 4;
+  let FREE_WIDTH   = 12;
   let SHAPE_WIDTH  = 3;
 
   let el, ctx;
@@ -45,7 +45,7 @@ const Canvas = (() => {
     const drawing = settings.drawing || {};
     if (settings.palette) COLORS.splice(0, COLORS.length, ...settings.palette.map(p => p.color));
     ERASE_RADIUS = drawing.eraserRadius ?? 24;
-    FREE_WIDTH = drawing.pencilWidth ?? 4;
+    FREE_WIDTH = drawing.pencilWidth ?? 12;
     SHAPE_WIDTH = drawing.shapeWidth ?? 3;
     activeTool = drawing.tool ?? 'pencil';
     currentColor = drawing.selectedColor ?? COLORS[0];
