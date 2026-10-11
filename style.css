@@ -104,10 +104,8 @@ input[type=color] { width: 30px; height: 30px; border: 1px solid #ccc; border-ra
 .about-section { margin-top: 18px; margin-bottom: 8px; font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: #888; }
 .about-steps { padding-left: 18px; }
 .about-steps li { margin-bottom: 4px; }
-.about-tools { display: grid; grid-template-columns: 1fr; gap: 4px; }
-.about-tools > div { display: flex; gap: 10px; align-items: baseline; }
-.about-tools dt { font-weight: 700; min-width: 28px; flex-shrink: 0; font-size: 15px; color: #333; }
-.about-tools dd { margin: 0; color: #444; font-size: 13px; }
+.about-list { padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 5px; }
+.about-list li { font-size: 13px; color: #444; }
 .about-link { display: inline-block; margin-top: 18px; padding: 8px 0; color: #2367a8; text-underline-offset: 3px; font-weight: 600; text-decoration: underline; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
