@@ -7,7 +7,7 @@ music:
   bpmStep: 5
   masterVolume: 0.65
   root: C
-  scale: major
+  scale: pentatonicm
   octaves: 4
   baseOctave: 3
   beatsPerSweep: 4
