@@ -14,8 +14,8 @@ const Audio = (() => {
 
   let OCTAVES = 4;
   let baseOctave = 3;
-  const ATTACK = 0.015;
-  const FADE = 0.015;
+  const ATTACK = 0.020;  // 20ms — ataque suave, evita pop al inicio de nota
+  const FADE   = 0.050;  // 50ms — fade de cierre, evita click en steal/deactivate
   const MAX_VOICES = 128;
   let actx, masterGain;
   const voices = new Set();
@@ -75,10 +75,12 @@ const Audio = (() => {
     if (typeof param.cancelAndHoldAtTime === 'function') {
       param.cancelAndHoldAtTime(time);
     } else {
-      // Preserve the part of an in-flight ramp before the cancellation time.
-      param.cancelScheduledValues(time);
-      const segment = [...v.envelopes].reverse().find(e => e.start <= time);
-      if (segment && time > segment.start && time < segment.end) {
+      // Fallback: cancel from now and hold current level to avoid discontinuity.
+      const now = actx.currentTime;
+      const currentLevel = levelAt(v, now);
+      param.cancelScheduledValues(now);
+      param.setValueAtTime(currentLevel, now);
+      if (Math.abs(currentLevel - level) > 0.001) {
         param.linearRampToValueAtTime(level, time);
       }
     }
@@ -112,6 +114,9 @@ const Audio = (() => {
       old.retired = true;
       voices.delete(old);
     }
+    // Always schedule at least 2ms ahead so the gain ramp starts before the
+    // oscillator produces audio — prevents the "pop at note start" click.
+    const t = Math.max(time, actx.currentTime + 0.002);
     const osc = actx.createOscillator();
     const env = actx.createGain();
     const peak = 0.38 * gain * vol;
@@ -119,8 +124,8 @@ const Audio = (() => {
     osc.frequency.value = freq * Math.pow(2, octave);
     osc.detune.value = detune;
     env.gain.value = 0;
-    env.gain.setValueAtTime(0, time);
-    env.gain.linearRampToValueAtTime(peak, time + ATTACK);
+    env.gain.setValueAtTime(0, t);
+    env.gain.linearRampToValueAtTime(peak, t + ATTACK);
     env.connect(masterGain);
     let filter = null;
     if (filterType !== 'none') {
@@ -134,8 +139,8 @@ const Audio = (() => {
       osc.connect(env);
     }
     const v = {
-      osc, env, filter, peak, startTime: time, release: Math.max(0.02, release / 1000),
-      envelopes: [{ start: time, end: time + ATTACK, from: 0, to: peak }],
+      osc, env, filter, peak, startTime: t, release: Math.max(0.02, release / 1000),
+      envelopes: [{ start: t, end: t + ATTACK, from: 0, to: peak }],
       releasing: false, ended: false, retired: false
     };
     osc.onended = () => {
@@ -146,7 +151,7 @@ const Audio = (() => {
       env.disconnect();
     };
     voices.add(v);
-    osc.start(time);
+    osc.start(t);
     return v;
   }
 
