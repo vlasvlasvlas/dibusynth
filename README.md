@@ -8,7 +8,7 @@ Dibujá una partitura y escuchala. La altura de cada trazo elige la nota, el col
 
 1. Elegí un color en **Instrumentos**.
 2. Elegí **Línea** (`—`) y arrastrá sobre el canvas para dibujar una línea horizontal.
-3. En **Barridos**, activá **→**. Si no hay ningún barrido activo, Play no produce notas.
+3. En **Barridos**, activá **→**. Si no hay ningún barrido activo al tocar Play, se activa **→** automáticamente.
 4. Tocá **▶**. En celulares, ese toque también habilita el audio del navegador.
 5. Dibujá otra línea más arriba: va a sonar más aguda. Usá otro color para sumar otro instrumento.
 6. Ajustá **BPM** para cambiar la velocidad y **Volumen** para controlar la mezcla general. **⏸** pausa la reproducción.
@@ -51,7 +51,7 @@ En celular, dibujá con un dedo sobre el canvas y desplazá verticalmente el pan
 |---|---|
 | ✏ | Dibujo libre; un toque sin arrastrar crea un punto que también suena. Opciones permite cambiar el grosor. |
 | — | Línea recta. Opciones permite elegir continua o punteada, grosor y separación. |
-| Crear | Elegí círculo, cuadrado, triángulo, estrella o texto en Opciones. |
+| + | Elegí círculo, cuadrado, triángulo, estrella o texto en Opciones. |
 | Balde | Elegí un color y tocá un trazo existente: cambia su color y su sonido. No rellena interiores. Si se superponen, toma el de arriba. |
 | Borrar | Elimina trazos completos. Su tamaño se ajusta en Opciones. |
 | Opciones | Ajustes de la herramienta seleccionada. También abre con clic derecho o pulsación larga sobre la herramienta. |
@@ -60,7 +60,7 @@ En celular, dibujá con un dedo sobre el canvas y desplazá verticalmente el pan
 
 Cada herramienta conserva sus opciones durante la sesión. El grosor se aplica a los próximos trazos; las líneas y figuras comparten grosor. Para círculos, triángulos y estrellas, arrastrá desde el centro hacia afuera. Para cuadrados, arrastrá desde una esquina.
 
-Para escribir, seleccioná **Crear → Opciones → Texto**, escribí la anotación y elegí su tamaño. Cerrá las opciones y tocá el canvas para colocarla. El texto **no produce sonido**, no se cuantiza y se puede borrar o recolorear.
+Para escribir, seleccioná **+ → Opciones → Texto**, escribí la anotación y elegí su tamaño. Cerrá las opciones y tocá el canvas para colocarla. El texto suena según su posición vertical, no se cuantiza y se puede borrar o recolorear.
 
 El botón **?** abre la información del proyecto y su enlace a GitHub en un modal. Se cierra con ✕, Escape o tocando fuera, sin cambiar el tamaño del canvas.
 
@@ -79,7 +79,7 @@ Con los valores iniciales, **C + Major** ocupa cuatro octavas, desde **Si6 arrib
 
 Cada barrido tiene su propia lectura y volumen. Podés combinar los cuatro. Una intersección continua de la misma nota y color mantiene el sonido; al abandonarla empieza su **release**, o cola de salida.
 
-Por defecto, una vuelta completa dura **4 tiempos**. A 90 BPM tarda aproximadamente 2,67 segundos:
+Por defecto, una vuelta completa dura **4 tiempos**. A 80 BPM tarda aproximadamente 3 segundos:
 
 ```text
 segundos por vuelta = beatsPerSweep × 60 / BPM
@@ -149,7 +149,7 @@ Una vuelta dura ahora unos 6,86 segundos. Las propiedades omitidas conservan sus
 
 | Clave bajo `music` | Inicial | Valores permitidos / significado |
 |---|---|---|
-| `bpm` | `90` | Entero entre 20 y 300. |
+| `bpm` | `80` | Entero entre 20 y 300. |
 | `bpmStep` | `5` | Entero entre 1 y 50. Cuánto suman/restan los botones +/−. |
 | `masterVolume` | `0.65` | 0–1. Volumen general. |
 | `root` | `C` | `C`, `C#`, `D`, `D#`, `E`, `F`, `F#`, `G`, `G#`, `A`, `A#`, `B`. |
@@ -173,7 +173,7 @@ Bajo `sweeps`, las claves son `lr` (→), `rl` (←), `tb` (↓) y `bt` (↑). C
 |---|---|---|
 | `tool` | `pencil` | `pencil`, `line-solid`, `line-dashed`, `circle`, `square`, `triangle`, `star`, `text`, `paint`, `eraser`. |
 | `selectedColor` | `"#27ae60"` | Un color que exista en `palette`. |
-| `pencilWidth` | `4` | 1–24 px. Grosor del lápiz sin cuantizar; con cuantización se adapta a la celda. |
+| `pencilWidth` | `12` | 1–24 px. Grosor del lápiz sin cuantizar; con cuantización se adapta a la celda. |
 | `shapeWidth` | `3` | 1–24 px. Grosor de líneas y círculos. |
 | `eraserRadius` | `24` | 4–100 px. Radio de búsqueda del borrador. |
 | `dashGap` | `7` | Entero entre 2 y 50 px. Espaciado visual de las próximas líneas punteadas. |
