@@ -200,10 +200,24 @@ const Canvas = (() => {
     const w = el.offsetWidth, h = el.offsetHeight;
     ctx.clearRect(0, 0, w, h);
 
-    // Grid overlay
+    // Octave boundary lines — always visible, mark where the same notes repeat
+    const octaveYs = Audio.getOctaveBoundaryYs(h);
+    if (octaveYs.length) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(80,80,80,0.28)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 6]);
+      octaveYs.forEach(y => {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+      });
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    // Quantize grid overlay
     if (quantize && cellSize > 0) {
       ctx.save();
-      ctx.strokeStyle = 'rgba(100,100,100,0.15)';
+      ctx.strokeStyle = 'rgba(100,100,100,0.12)';
       ctx.lineWidth = 0.5;
       for (let x = 0; x <= w; x += cellSize) {
         ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();

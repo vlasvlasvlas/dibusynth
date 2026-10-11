@@ -207,6 +207,19 @@ const Audio = (() => {
     return currentScale[Math.max(0, Math.min(currentScale.length - 1, idx))];
   }
 
+  // Returns Y positions (px) where octaves repeat, for a given canvas height.
+  // These mark where the same note class starts again one octave lower.
+  function getOctaveBoundaryYs(canvasH) {
+    if (!currentScale.length) return [];
+    const perOctave = SCALES[currentScaleId].intervals.length;
+    const total = currentScale.length;
+    const ys = [];
+    for (let i = perOctave; i < total; i += perOctave) {
+      ys.push((i / total) * canvasH);
+    }
+    return ys;
+  }
+
   function setRoot(root)     { currentRoot    = root;    currentScale = buildScale(root, currentScaleId); }
   function setScale(scaleId) { currentScaleId = scaleId; currentScale = buildScale(currentRoot, scaleId); }
   function setMasterVol(v) {
@@ -215,5 +228,5 @@ const Audio = (() => {
     masterGain.gain.setTargetAtTime(v, now, 0.015);
   }
 
-  return { init, resume, triggerNote, syncSweep, releaseSweep, stopAll, currentTime, noteForY, setRoot, setScale, setMasterVol, SCALES, ROOTS };
+  return { init, resume, triggerNote, syncSweep, releaseSweep, stopAll, currentTime, noteForY, getOctaveBoundaryYs, setRoot, setScale, setMasterVol, SCALES, ROOTS };
 })();
