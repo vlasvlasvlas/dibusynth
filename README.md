@@ -52,9 +52,10 @@ En celular, dibujá con un dedo sobre el canvas y desplazá verticalmente el pan
 | ✏ | Dibujo libre; un toque sin arrastrar crea un punto que también suena. Opciones permite cambiar el grosor. |
 | — | Línea recta. Opciones permite elegir continua o punteada, grosor y separación. |
 | + | Elegí círculo, cuadrado, triángulo, estrella o texto en Opciones. |
-| Balde | Elegí un color y tocá un trazo existente: cambia su color y su sonido. No rellena interiores. Si se superponen, toma el de arriba. |
-| Borrar | Elimina trazos completos. Su tamaño se ajusta en Opciones. |
-| Opciones | Ajustes de la herramienta seleccionada. También abre con clic derecho o pulsación larga sobre la herramienta. |
+| ⚙ | Ajustes de la herramienta seleccionada: grosor, tipo de línea, separación del punteado. También abre con clic derecho o pulsación larga sobre la herramienta activa. |
+| Mover | Arrastrá un trazo ya dibujado para reposicionarlo. Al soltarlo el mapa sonoro se actualiza en el lugar nuevo. |
+| Recolorear | Tocá un trazo existente para cambiarle el color y su instrumento. No rellena interiores. Si se superponen, toma el de arriba. |
+| Borrar | Elimina trazos completos al tocarlos. Su radio de búsqueda se ajusta en Opciones. |
 | ↩ | Deshace hasta 100 operaciones de dibujo, cambio de color, borrado o limpieza. |
 | ✕ | Limpia el dibujo y las anotaciones. |
 
@@ -179,7 +180,7 @@ Bajo `sweeps`, las claves son `lr` (→), `rl` (←), `tb` (↓) y `bt` (↑). C
 | `dashGap` | `7` | Entero entre 2 y 50 px. Espaciado visual de las próximas líneas punteadas. |
 | `quantize` | `false` | Activa o desactiva el ajuste a celdas. |
 | `cellSize` | `25` | 10–80 px, en múltiplos de 5. |
-| `guides` | `false` | Muestra las divisiones verticales. |
+| `guides` | `true` | Muestra las divisiones verticales. |
 | `divisions` | `4` | `2`, `3`, `4`, `6`, `8`, `12` o `16`. Divisiones visuales del ancho. |
 | `octaveGuides` | `true` | Muestra las líneas que separan octavas. |
 | `text` | `""` | Anotación inicial, hasta 200 caracteres. |
@@ -192,7 +193,7 @@ Cada recarga elige dos colores de la paleta y los mezcla con un 95 % de blanco: 
 | Clave bajo `background` | Inicial | Valores permitidos |
 |---|---|---|
 | `randomize` | `true` | Elegir colores de la paleta al iniciar. `false` usa `first` y `second`. |
-| `tint` | `0.05` | De `0` (blanco) a `1` (color original). Intensidad del fondo aleatorio. |
+| `tint` | `0.18` | De `0` (blanco) a `1` (color original). Intensidad del fondo aleatorio. |
 | `first` | `"#f0ebe0"` | Color hexadecimal de seis dígitos. |
 | `second` | `"#ffffff"` | Color hexadecimal de seis dígitos. |
 | `direction` | `to bottom` | `to bottom` (vertical) o `to right` (horizontal). |
