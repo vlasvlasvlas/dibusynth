@@ -304,11 +304,18 @@
     slider.value = Canvas.getDashGap();
     updateDashPreview(Canvas.getDashGap());
 
-    // Position near the button
-    const btnRect = $('btn-line-dashed').getBoundingClientRect();
-    pop.style.left = btnRect.left + 'px';
-    pop.style.bottom = (window.innerHeight - btnRect.top + 6) + 'px';
+    // Show first to measure real size, then position above the button
+    pop.style.left = '-9999px';
+    pop.style.top  = '-9999px';
+    pop.style.bottom = '';
     pop.classList.remove('hidden');
+
+    const popRect = pop.getBoundingClientRect();
+    const btnRect = $('btn-line-dashed').getBoundingClientRect();
+    const left = Math.max(8, Math.min(btnRect.left, window.innerWidth - popRect.width - 8));
+    const top  = Math.max(8, btnRect.top - popRect.height - 8);
+    pop.style.left = left + 'px';
+    pop.style.top  = top  + 'px';
 
     slider.oninput = ev => {
       const val = parseInt(ev.target.value, 10);
