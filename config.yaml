@@ -28,7 +28,7 @@ drawing:
   dashGap: 7
   quantize: false
   cellSize: 25
-  guides: false
+  guides: true
   divisions: 4
   octaveGuides: true
   text: "" # Anotación para colocar con Crear → Texto.
