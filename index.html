@@ -94,13 +94,42 @@
 
   <dialog id="about-popover" aria-labelledby="about-title">
     <div class="popover-heading">
-      <h2 id="about-title">dibusynth</h2>
-      <button id="about-close" aria-label="Cerrar información del proyecto">✕</button>
+      <h2 id="about-title">dibusynth — cómo funciona</h2>
+      <button id="about-close" aria-label="Cerrar">✕</button>
     </div>
-    <p>Un sintetizador que transforma dibujos en música. La altura del trazo elige la nota, el color elige el instrumento y los barridos recorren tu dibujo para hacerlo sonar.</p>
-    <p>Para empezar: elegí un color, dibujá, activá una flecha de barrido y tocá ▶.</p>
-    <p>Podés personalizar los instrumentos y los ajustes iniciales con los archivos YAML del proyecto. En GitHub están el código y la guía completa.</p>
-    <a href="https://github.com/vlasvlasvlas/dibusynth" target="_blank" rel="noopener noreferrer">Ver el proyecto en GitHub ↗<span class="sr-only"> (abre una pestaña nueva)</span></a>
+
+    <p class="about-intro">Dibujás, y el dibujo suena. <strong>La altura en el canvas = la nota.</strong> Arriba es agudo, abajo es grave. El color elige el instrumento. Los barridos recorren el dibujo y tocan lo que encuentran.</p>
+
+    <h3 class="about-section">Para empezar</h3>
+    <ol class="about-steps">
+      <li>Elegí un color en la fila de instrumentos.</li>
+      <li>Dibujá algo — una línea horizontal suena mientras el barrido la cruza.</li>
+      <li>Tocá <strong>▶</strong> — si no hay barrido activo, se activa → automáticamente.</li>
+      <li>Mové las líneas arriba o abajo para cambiar la nota.</li>
+    </ol>
+
+    <h3 class="about-section">Herramientas</h3>
+    <dl class="about-tools">
+      <div><dt>✏</dt><dd>Lápiz — trazos libres. El grosor se ajusta en ⚙.</dd></div>
+      <div><dt>—</dt><dd>Línea recta — continua o punteada, elegís en ⚙.</dd></div>
+      <div><dt>+</dt><dd>Crear figura — círculo, cuadrado, triángulo, estrella o texto. Elegís en ⚙.</dd></div>
+      <div><dt>⚙</dt><dd>Opciones — muestra los ajustes de la herramienta activa.</dd></div>
+      <div><dt>✥</dt><dd>Mover — tocá un trazo y arrastralo a otra posición.</dd></div>
+      <div><dt>⌁</dt><dd>Recolorear — tocá un trazo para cambiarle el color y el instrumento.</dd></div>
+      <div><dt>⬜</dt><dd>Borrador — elimina el trazo que toques.</dd></div>
+      <div><dt>↩</dt><dd>Deshacer — revierte hasta 100 pasos.</dd></div>
+      <div><dt>✕</dt><dd>Borrar todo — limpia el canvas completo.</dd></div>
+    </dl>
+
+    <h3 class="about-section">Instrumentos y barridos</h3>
+    <dl class="about-tools">
+      <div><dt>Colores</dt><dd>Cada color es un instrumento distinto. Tocá uno para dibujar con él.</dd></div>
+      <div><dt>M</dt><dd>Silencia ese color sin borrar los trazos.</dd></div>
+      <div><dt>⚙ swatch</dt><dd>Edita la onda, el filtro, la afinación y el volumen de ese instrumento.</dd></div>
+      <div><dt>→ ← ↓ ↑</dt><dd>Barridos — cada flecha lee el dibujo en su dirección. Podés activar varios a la vez.</dd></div>
+    </dl>
+
+    <a class="about-link" href="https://github.com/vlasvlasvlas/dibusynth" target="_blank" rel="noopener noreferrer">Guía completa y código en GitHub ↗<span class="sr-only"> (abre una pestaña nueva)</span></a>
   </dialog>
 
   <!-- Dash gap popover -->

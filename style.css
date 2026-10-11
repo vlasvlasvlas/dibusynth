@@ -97,11 +97,18 @@ input[type=color] { width: 30px; height: 30px; border: 1px solid #ccc; border-ra
 #config-status { font-size: 12px; color: #854600; padding: 6px 0; }
 
 #btn-about { position: fixed; top: 12px; right: 12px; top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); z-index: 100; width: 44px; height: 44px; border-radius: 50%; background: #fffffff2; font-size: 20px; box-shadow: 0 2px 8px #0001; }
-#about-popover { width: 360px; padding: 16px; font-size: 14px; line-height: 1.55; }
-#about-title { margin: 0; color: #222; font-size: 20px; letter-spacing: 0; text-transform: none; }
+#about-popover { width: 400px; padding: 20px; font-size: 14px; line-height: 1.55; }
+#about-title { margin: 0; color: #222; font-size: 18px; letter-spacing: 0; text-transform: none; font-weight: 700; }
 #about-close { width: 36px; height: 36px; font-size: 14px; }
-#about-popover p { margin-top: 12px; }
-#about-popover a { display: inline-block; margin-top: 14px; padding: 8px 0; color: #2367a8; text-underline-offset: 3px; font-weight: 600; }
+.about-intro { margin-top: 12px; }
+.about-section { margin-top: 18px; margin-bottom: 8px; font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: #888; }
+.about-steps { padding-left: 18px; }
+.about-steps li { margin-bottom: 4px; }
+.about-tools { display: grid; grid-template-columns: 1fr; gap: 4px; }
+.about-tools > div { display: flex; gap: 10px; align-items: baseline; }
+.about-tools dt { font-weight: 700; min-width: 28px; flex-shrink: 0; font-size: 15px; color: #333; }
+.about-tools dd { margin: 0; color: #444; font-size: 13px; }
+.about-link { display: inline-block; margin-top: 18px; padding: 8px 0; color: #2367a8; text-underline-offset: 3px; font-weight: 600; text-decoration: underline; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 #btn-circle { width: auto; padding: 0 9px; font-size: 12px; }
